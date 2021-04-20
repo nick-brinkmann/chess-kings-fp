@@ -1,5 +1,5 @@
 (* Module file that handles all the game elements *)
-type player = White | Black ;;
+type player = bool ;;
 type rank = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 ;;
 type file = A | B | C | D | E | F | G | H ;;
 type coordinate = file * rank ;;
@@ -14,13 +14,12 @@ let new_piece (pt : pieceType) (pl : player) : piece =
 let new_square (c : coordinate) (p : piece) : square = 
   c, p ;;
 
-let new_back_rank (pl : player) : square array = 
-  if pl = White then 
-    [| new_square A 1 (new_piece )]
   
 
-let new_position () : position = 
-  [|  |] ;;
+let init_position () : position = 
+  [| [| (A, 1), (new_piece Rook White); (B, 1), ; (C, 1),  ; (D, 1), ; (E, 1), ; (F, 1), ; (G, 1), ; (H, 1), |];
+     [| (A, 2), (new_piece ) |]
+  |] ;;
 
 
 
@@ -46,17 +45,3 @@ let int_to_file (i : int) : file =
   | 6 -> F
   | 7 -> G
   | 8 -> H ;;
-
-
-
-(* Draws the map for a given maze. *)
-let draw_board (board : position array array)
-              (elt_width : int) (elt_height : int)
-            : unit =
-  G.set_line_width cLINEWIDTH;
-  Array.iteri (fun y m -> 
-                Array.iteri (fun x n -> 
-                            match n with
-                            | EmptySpace -> draw_square cUNSEENCOLOR y x elt_width elt_height
-                            | Wall -> draw_square cWALLCOLOR y x elt_width elt_height
-                            ) m) maze_map ;;
