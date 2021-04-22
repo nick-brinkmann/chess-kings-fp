@@ -1,4 +1,5 @@
 open Game ;;
+open Params ;;
 module T = Registry ;;
 module R = T.Registry ;;
 module P = Pieces ;;
@@ -50,16 +51,14 @@ let run () =
 
   initialize_pieces ();
   
-  let leave_early = ref false in
-  while not !leave_early do
+  let end_game = ref false in
+  while not !end_game do
     Graphics.clear_graph ();
     (* Viz.draw_board test_array (Viz.cX_DIMENSION) (Viz.cY_DIMENSION);
     Viz.light_up (); *)
-    Viz.render (R.get_pieces ()) 
-               test_array 
-               (Viz.cSQUARE_WIDTH)
-               (Viz.cSQUARE_HEIGHT);
+    Viz.render  (R.get_pieces ()) 
+                test_array ;
 
-    if Viz.quit () then leave_early := true
+    if not (Viz.move_on ()) then end_game := true
   done;;
 

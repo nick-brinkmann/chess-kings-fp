@@ -3,7 +3,7 @@
    ......................................................................... *)
 
 open Game ;;
-module Viz = Visualization ;;
+open Params ;;
 module G = Graphics ;;
 
 class piece (initfile : file) (initrank : rank) (player : bool) = 
@@ -44,8 +44,8 @@ object(self)
       if player then G.set_color G.red
       else G.set_color G.blue;
       let (f, r) = self#get_pos in
-      let x = Viz.cSQUARE_WIDTH * ((file_to_int f) - 1) + (Viz.cSQUARE_WIDTH / 2) in
-      let y = Viz.cSQUARE_HEIGHT * ((rank_to_int r) - 1) + (Viz.cSQUARE_HEIGHT / 2) in
+      let x = cSQUARE_WIDTH * ((file_to_int f) - 1) + (cSQUARE_WIDTH / 2) in
+      let y = cSQUARE_HEIGHT * ((rank_to_int r) - 1) + (cSQUARE_HEIGHT / 2) in
       G.moveto x y;
       G.draw_string "Pawn"
    (* method make_move ((new_f, new_r) : coordinate) =  *)
@@ -65,8 +65,8 @@ object(self)
       if player then G.set_color G.red
       else G.set_color G.blue;
       let (f, r) = self#get_pos in
-      let x = Viz.cSQUARE_WIDTH * ((file_to_int f) - 1) + (Viz.cSQUARE_WIDTH / 2) in
-      let y = Viz.cSQUARE_HEIGHT * ((rank_to_int r) - 1) + (Viz.cSQUARE_HEIGHT / 2) in
+      let x = cSQUARE_WIDTH * ((file_to_int f) - 1) + (cSQUARE_WIDTH / 2) in
+      let y = cSQUARE_HEIGHT * ((rank_to_int r) - 1) + (cSQUARE_HEIGHT / 2) in
       G.moveto x y;
       G.draw_string "Rook"
 
@@ -83,8 +83,8 @@ object(self)
    if player then G.set_color G.red
    else G.set_color G.blue;
    let (f, r) = self#get_pos in
-   let x = Viz.cSQUARE_WIDTH * ((file_to_int f) - 1) + (Viz.cSQUARE_WIDTH / 2) in
-   let y = Viz.cSQUARE_HEIGHT * ((rank_to_int r) - 1) + (Viz.cSQUARE_HEIGHT / 2) in
+   let x = cSQUARE_WIDTH * ((file_to_int f) - 1) + (cSQUARE_WIDTH / 2) in
+   let y = cSQUARE_HEIGHT * ((rank_to_int r) - 1) + (cSQUARE_HEIGHT / 2) in
    G.moveto x y;
    G.draw_string "Knight"
 end
@@ -100,8 +100,8 @@ object(self)
    if player then G.set_color G.red
    else G.set_color G.blue;
    let (f, r) = self#get_pos in
-   let x = Viz.cSQUARE_WIDTH * ((file_to_int f) - 1) + (Viz.cSQUARE_WIDTH / 2) in
-   let y = Viz.cSQUARE_HEIGHT * ((rank_to_int r) - 1) + (Viz.cSQUARE_HEIGHT / 2) in
+   let x = cSQUARE_WIDTH * ((file_to_int f) - 1) + (cSQUARE_WIDTH / 2) in
+   let y = cSQUARE_HEIGHT * ((rank_to_int r) - 1) + (cSQUARE_HEIGHT / 2) in
    G.moveto x y;
    G.draw_string "Bishop"
 end
@@ -117,8 +117,8 @@ object(self)
    if player then G.set_color G.red
    else G.set_color G.blue;
    let (f, r) = self#get_pos in
-   let x = Viz.cSQUARE_WIDTH * ((file_to_int f) - 1) + (Viz.cSQUARE_WIDTH / 2) in
-   let y = Viz.cSQUARE_HEIGHT * ((rank_to_int r) - 1) + (Viz.cSQUARE_HEIGHT / 2) in
+   let x = cSQUARE_WIDTH * ((file_to_int f) - 1) + (cSQUARE_WIDTH / 2) in
+   let y = cSQUARE_HEIGHT * ((rank_to_int r) - 1) + (cSQUARE_HEIGHT / 2) in
    G.moveto x y;
    G.draw_string "Queen"
 end
@@ -134,8 +134,8 @@ object(self)
    if player then G.set_color G.red
    else G.set_color G.blue;
    let (f, r) = self#get_pos in
-   let x = Viz.cSQUARE_WIDTH * ((file_to_int f) - 1) + (Viz.cSQUARE_WIDTH / 2) in
-   let y = Viz.cSQUARE_HEIGHT * ((rank_to_int r) - 1) + (Viz.cSQUARE_HEIGHT / 2) in
+   let x = cSQUARE_WIDTH * ((file_to_int f) - 1) + (cSQUARE_WIDTH / 2) in
+   let y = cSQUARE_HEIGHT * ((rank_to_int r) - 1) + (cSQUARE_HEIGHT / 2) in
    G.moveto x y;
    G.draw_string "King"
 end 
