@@ -45,12 +45,18 @@ let draw_board (board : int array array)
                               else draw_square cBLACKCOLOR y x elt_width elt_height
                             ) m) board ;;
 
+let highlight_square (c : coordinate) : unit =
+  let (x, y) = coord_to_int c in
+  let (corner_x, corner_y) = (cSQUARE_WIDTH * x, cSQUARE_HEIGHT * y) in
+  G.set_color G.magenta;
+  G.draw_rect corner_x corner_y cSQUARE_WIDTH cSQUARE_HEIGHT
+;;
 
 let get_coords (x : int) (y : int) : coordinate = 
   let reduce_x = x - (x mod cSQUARE_WIDTH) in
   let reduce_y = y - (y mod cSQUARE_HEIGHT) in
-  let f = (int_to_file ((reduce_x / cSQUARE_WIDTH) + 1)) in
-  let r = (int_to_rank ((reduce_y / cSQUARE_HEIGHT) + 1)) in
+  let f = (int_to_file ((reduce_x / cSQUARE_WIDTH))) in
+  let r = (int_to_rank ((reduce_y / cSQUARE_HEIGHT))) in
   f, r
 ;;
 
@@ -67,7 +73,7 @@ let print_coords () =
   | None -> (G.moveto x y;
             G.set_color G.red;
             G.draw_string "No piece here")
-  | Some piece -> piece#draw
+  | Some piece -> highlight_square piece#get_pos
 ;; 
 
 

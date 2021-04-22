@@ -15,3 +15,4 @@ let cBLACKCOLOR = G.black ;;
 
 let cWHITE_PIECE_COLOR = G.red ;;
 let cBLACK_PIECE_COLOR = G.blue ;;
+let cSELECTED_COLOR = G.magenta ;;

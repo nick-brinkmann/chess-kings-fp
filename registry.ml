@@ -21,11 +21,14 @@ module G = Graphics ;;
  
 class type piece_type =
   object
-    method get_color : G.color
     method get_pos : coordinate
 
-    method update_pos : coordinate -> unit
-    method draw : G.color -> unit
+    method make_move : coordinate -> unit
+
+    method draw : unit
+
+    method get_color : bool
+
   end ;;
 
 (*....................................................................
@@ -46,8 +49,21 @@ module type REGISTRY =
     (* get_pieces () -- Returns a list of all of the curently 
         registered pieces. *)
     val get_pieces : unit -> piece_type list
-  
-    val find_piece : coordinate -> piece_type option
+    
+    (* Returns piece_type option:
+        - None if there is no piece on corresponding square
+        - Some Piece if a piece is found *)
+    val find_piece : coordinate -> (piece_type option)
+
+    (* contains_enemy_piece your_color coordinate -- returns true if square 
+      contains an enemy piece, else false *)
+    val contains_enemy_piece : bool -> coordinate -> bool
+
+    (* returns true if square contains a friendly piece, else false *)
+    val contains_own_piece : bool -> coordinate -> bool 
+
+    (* returns true if square contains any piece *)
+    val contains_any_piece : coordinate -> bool
   end
 
 module Registry : REGISTRY =
@@ -73,7 +89,7 @@ module Registry : REGISTRY =
       let f, r = obj#get_pos in
       let fi = file_to_int f in
       let ra = rank_to_int r in
-      position.(fi - 1).(ra - 1) <- Some obj ;;
+      position.(fi).(ra) <- Some obj ;;
 
     let deregister (obj : piece_type) : unit =
       let new_registrants = Registrants.remove obj !registrants in
@@ -86,14 +102,51 @@ module Registry : REGISTRY =
           let f, r = obj#get_pos in
           let fi = file_to_int f in
           let ra = rank_to_int r in
-          position.(fi - 1).(ra - 1) <- None
+          position.(fi).(ra) <- None
         end ;;
       
     let get_pieces () = Registrants.elements !registrants ;;
   
-    let find_piece coord = 
+    (* let find_piece coord = 
       let subset = Registrants.filter (fun obj -> obj#get_pos = coord) !registrants in
       Registrants.choose_opt subset
-    ;;
+    ;; *)
+
+    let find_piece (c : coordinate) : piece_type option =
+      let fi, ra = coord_to_int c in 
+      position.(fi).(ra) ;;
+
+    let contains_enemy_piece (your_color : bool) (coord : coordinate) : bool = 
+      match find_piece coord with 
+      | None -> false 
+      | Some piece -> piece#get_color <> your_color ;;
+
+    let contains_own_piece (your_color : bool) (coord : coordinate) : bool = 
+      match find_piece coord with 
+      | None -> false 
+      | Some piece -> piece#get_color = your_color ;;
+
+    let contains_any_piece (coord : coordinate) : bool = 
+      match find_piece coord with 
+      | None -> false 
+      | Some _piece -> true ;;
+
+    (* checks whether there's a piece along the given line or diagonal *)
+    let is_piece_along_line_from (start_coord : coordinate) 
+                                 (end_coord : coordinate) : bool =
+      (* turns into int representation *)
+      let sf, sr = coord_to_int start_coord in
+      let ef, er = coord_to_int end_coord in
+
+      (* helper function to generate list *)
+
+      (* checks that you're using a vertical line *)
+      if sf - ef = 0 then 
+        begin
+
+        end
+
+
+
 
   end

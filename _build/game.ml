@@ -37,54 +37,57 @@ let new_square (c : coordinate) (p : piece) : square =
   |] ;; *)
 
 
-
+(* file_to_int f -- returns zero-indexed int *)
 let file_to_int (f : file) : int = 
   match f with 
-  | A -> 1
-  | B -> 2
-  | C -> 3
-  | D -> 4
-  | E -> 5
-  | F -> 6
-  | G -> 7
-  | H -> 8 ;;
+  | A -> 0
+  | B -> 1
+  | C -> 2
+  | D -> 3
+  | E -> 4
+  | F -> 5
+  | G -> 6
+  | H -> 7 ;;
 
-let rank_to_int (i : rank) : int =
-  match i with 
-  | R1 -> 1
-  | R2 -> 2
-  | R3 -> 3
-  | R4 -> 4
-  | R5 -> 5
-  | R6 -> 6
-  | R7 -> 7
-  | R8 -> 8 ;;
+(* rank_to_int r -- returns zero-indexed int *)
+let rank_to_int (r : rank) : int =
+  match r with 
+  | R1 -> 0
+  | R2 -> 1
+  | R3 -> 2
+  | R4 -> 3
+  | R5 -> 4
+  | R6 -> 5
+  | R7 -> 6
+  | R8 -> 7 ;;
+
+let coord_to_int (file, rank : coordinate) : int * int = 
+  (file_to_int file, rank_to_int rank) ;;
+
 
 let int_to_file (i : int) : file = 
-  if i < 1 || i > 8 then raise (Invalid_argument "Not a valid file")
-  else
     match i with
-    | 1 -> A
-    | 2 -> B
-    | 3 -> C
-    | 4 -> D
-    | 5 -> E
-    | 6 -> F
-    | 7 -> G
-    | 8 -> H ;;
+    | 0 -> A
+    | 1 -> B
+    | 2 -> C
+    | 3 -> D
+    | 4 -> E
+    | 5 -> F
+    | 6 -> G
+    | 7 -> H 
+    | _ -> raise (Invalid_argument "Not a valid file") ;;
 
 let int_to_rank (i : int) : rank = 
-  if i < 1 || i > 8 then raise (Invalid_argument "Not a valid rank")
-  else
     match i with
-    | 1 -> R1
-    | 2 -> R2
-    | 3 -> R3
-    | 4 -> R4
-    | 5 -> R5
-    | 6 -> R6
-    | 7 -> R7
-    | 8 -> R8 ;;
+    | 0 -> R1
+    | 1 -> R2
+    | 2 -> R3
+    | 3 -> R4
+    | 4 -> R5
+    | 5 -> R6
+    | 6 -> R7
+    | 7 -> R8
+    | _ -> raise (Invalid_argument "Not a valid rank") ;;
 
 let file_to_string (f : file) : string =
   match f with
