@@ -12,21 +12,27 @@ ocamlfind ocamldep -package graphics -package CS51Utils -modules params.ml > par
 # Target: params.cmo, tags: { package(CS51Utils), package(graphics), warn(A-4-33-40-41-42-43-34-44), byte, compile, extension:cmo, extension:ml, file:params.cmo, file:params.ml, implem, ocaml, quiet, strict-sequence, thread, traverse, use_str }
 ocamlfind ocamlc -c -thread -strict-sequence -package graphics -package CS51Utils -w A-4-33-40-41-42-43-34-44 -o params.cmo params.ml # cached
 # Target: pieces.ml.depends, tags: { package(CS51Utils), package(graphics), warn(A-4-33-40-41-42-43-34-44), extension:ml, file:pieces.ml, ocaml, ocamldep, quiet, strict-sequence, thread, traverse, use_str }
-ocamlfind ocamldep -package graphics -package CS51Utils -modules pieces.ml > pieces.ml.depends # cached
-# Target: pieces.cmo, tags: { package(CS51Utils), package(graphics), warn(A-4-33-40-41-42-43-34-44), byte, compile, extension:cmo, extension:ml, file:pieces.cmo, file:pieces.ml, implem, ocaml, quiet, strict-sequence, thread, traverse, use_str }
-ocamlfind ocamlc -c -thread -strict-sequence -package graphics -package CS51Utils -w A-4-33-40-41-42-43-34-44 -o pieces.cmo pieces.ml # cached
+ocamlfind ocamldep -package graphics -package CS51Utils -modules pieces.ml > pieces.ml.depends
 # Target: registry.ml.depends, tags: { package(CS51Utils), package(graphics), warn(A-4-33-40-41-42-43-34-44), extension:ml, file:registry.ml, ocaml, ocamldep, quiet, strict-sequence, thread, traverse, use_str }
 ocamlfind ocamldep -package graphics -package CS51Utils -modules registry.ml > registry.ml.depends # cached
-# Target: registry.cmo, tags: { package(CS51Utils), package(graphics), warn(A-4-33-40-41-42-43-34-44), byte, compile, extension:cmo, extension:ml, file:registry.cmo, file:registry.ml, implem, ocaml, quiet, strict-sequence, thread, traverse, use_str }
-ocamlfind ocamlc -c -thread -strict-sequence -package graphics -package CS51Utils -w A-4-33-40-41-42-43-34-44 -o registry.cmo registry.ml # cached
 # Target: visualization.ml.depends, tags: { package(CS51Utils), package(graphics), warn(A-4-33-40-41-42-43-34-44), extension:ml, file:visualization.ml, ocaml, ocamldep, quiet, strict-sequence, thread, traverse, use_str }
-ocamlfind ocamldep -package graphics -package CS51Utils -modules visualization.ml > visualization.ml.depends
-# Target: visualization.cmo, tags: { package(CS51Utils), package(graphics), warn(A-4-33-40-41-42-43-34-44), byte, compile, extension:cmo, extension:ml, file:visualization.cmo, file:visualization.ml, implem, ocaml, quiet, strict-sequence, thread, traverse, use_str }
-ocamlfind ocamlc -c -thread -strict-sequence -package graphics -package CS51Utils -w A-4-33-40-41-42-43-34-44 -o visualization.cmo visualization.ml
-# Target: simulate_game.cmo, tags: { package(CS51Utils), package(graphics), warn(A-4-33-40-41-42-43-34-44), byte, compile, extension:cmo, extension:ml, file:simulate_game.cmo, file:simulate_game.ml, implem, ocaml, quiet, strict-sequence, thread, traverse, use_str }
-ocamlfind ocamlc -c -thread -strict-sequence -package graphics -package CS51Utils -w A-4-33-40-41-42-43-34-44 -o simulate_game.cmo simulate_game.ml
-# Target: run.cmo, tags: { package(CS51Utils), package(graphics), warn(A-4-33-40-41-42-43-34-44), byte, compile, extension:cmo, extension:ml, file:run.cmo, file:run.ml, implem, ocaml, quiet, strict-sequence, thread, traverse, use_str }
-ocamlfind ocamlc -c -thread -strict-sequence -package graphics -package CS51Utils -w A-4-33-40-41-42-43-34-44 -o run.cmo run.ml
-# Target: run.byte, tags: { package(CS51Utils), package(graphics), warn(A-4-33-40-41-42-43-34-44), byte, dont_link_with, extension:byte, file:run.byte, link, ocaml, program, quiet, strict-sequence, thread, traverse, use_str }
-ocamlfind ocamlc -linkpkg str.cma -thread -package graphics -package CS51Utils game.cmo params.cmo pieces.cmo registry.cmo visualization.cmo simulate_game.cmo run.cmo -o run.byte
-# Compilation successful.
+ocamlfind ocamldep -package graphics -package CS51Utils -modules visualization.ml > visualization.ml.depends # cached
+# Target: pieces.cmo, tags: { package(CS51Utils), package(graphics), warn(A-4-33-40-41-42-43-34-44), byte, compile, extension:cmo, extension:ml, file:pieces.cmo, file:pieces.ml, implem, ocaml, quiet, strict-sequence, thread, traverse, use_str }
+ocamlfind ocamlc -c -thread -strict-sequence -package graphics -package CS51Utils -w A-4-33-40-41-42-43-34-44 -o pieces.cmo pieces.ml
++ ocamlfind ocamlc -c -thread -strict-sequence -package graphics -package CS51Utils -w A-4-33-40-41-42-43-34-44 -o pieces.cmo pieces.ml
+File "pieces.ml", line 30, characters 18-29:
+30 |     method draw ?(color=color) : unit = 
+                       ^^^^^^^^^^^
+Warning 16: this optional argument cannot be erased.
+File "pieces.ml", line 59, characters 24-34:
+59 |    method! draw ?(color=self#color) : unit = 
+                             ^^^^^^^^^^
+Warning 17: the virtual method color is not declared.
+File "pieces.ml", line 60, characters 17-22:
+60 |       super#draw color;
+                      ^^^^^
+Error: The function applied to this argument has type
+         ?color:Params.G.color -> unit
+This argument cannot be applied without label
+Command exited with code 2.
+# Compilation unsuccessful.

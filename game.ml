@@ -2,7 +2,7 @@
 
 (* Module file that handles all the game elements *)
 (* White is true, Black is false *)
-type player = bool ;;
+(* type player = bool ;; *)
 type rank = R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 ;;
 type file = A | B | C | D | E | F | G | H ;;
 type coordinate = file * rank ;;
@@ -61,7 +61,7 @@ let rank_to_int (i : rank) : int =
   | R8 -> 8 ;;
 
 let int_to_file (i : int) : file = 
-  if i < 1 || i > 8 then raise (Invalid_argument "Not a valid rank")
+  if i < 1 || i > 8 then raise (Invalid_argument "Not a valid file")
   else
     match i with
     | 1 -> A

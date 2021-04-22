@@ -62,14 +62,12 @@ let print_coords () =
   let (f, r) = get_coords x y in
   G.set_color G.magenta;
   G.moveto x y;
-  (* G.draw_string ((file_to_string f) ^ (rank_to_string r)) *)
-  if not (R.find_piece (f, r)) then 
-    (G.moveto x y;
-    G.set_color G.red;
-    G.draw_string "No piece here")
-  else
-    (G.set_color G.red;
-    G.fill_rect x y cSQUARE_WIDTH cSQUARE_HEIGHT)
+  let p = R.find_piece (f, r) in
+  match p with
+  | None -> (G.moveto x y;
+            G.set_color G.red;
+            G.draw_string "No piece here")
+  | Some piece -> piece#draw
 ;; 
 
 

@@ -21,11 +21,11 @@ module G = Graphics ;;
  
 class type piece_type =
   object
-
+    method get_color : G.color
     method get_pos : coordinate
 
     method update_pos : coordinate -> unit
-    method draw : unit
+    method draw : G.color -> unit
   end ;;
 
 (*....................................................................
@@ -60,7 +60,7 @@ module Registry : REGISTRY =
 
     let registrants = ref Registrants.empty ;;
 
-    (* map -- A "map" of all the registered objects, organized by
+    (* position -- A "map" of all the pieces, organized by
        2-D location *)
     let position : (piece_type option) array array =
       make_matrix 8 8 None ;;
@@ -79,7 +79,7 @@ module Registry : REGISTRY =
       let new_registrants = Registrants.remove obj !registrants in
       if new_registrants == !registrants then
         (* no obj removed; as of v4.03, physical equality guaranteed *)
-        raise Not_found
+        raise (Invalid_argument "deregister: object not in registry to begin with")
       else
         begin
           registrants := new_registrants;
@@ -93,7 +93,7 @@ module Registry : REGISTRY =
   
     let find_piece coord = 
       let subset = Registrants.filter (fun obj -> obj#get_pos = coord) !registrants in
-      subset.choose_opt
+      Registrants.choose_opt subset
     ;;
 
   end

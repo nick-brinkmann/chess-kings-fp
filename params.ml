@@ -2,7 +2,7 @@
 module G = Graphics ;;
 
 let cX_DIMENSION = 100 ;;
-let cY_DIMENSION = 100 ;;
+let cY_DIMENSION = cX_DIMENSION ;;
 let cPIXELS_PER_BLOCK = 8 ;;
 
 let cSQUARE_WIDTH = (cX_DIMENSION*cPIXELS_PER_BLOCK) / 8 ;;
