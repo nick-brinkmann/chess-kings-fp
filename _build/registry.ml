@@ -47,8 +47,7 @@ module type REGISTRY =
         registered pieces. *)
     val get_pieces : unit -> piece_type list
   
-    (* occupied -- Return piece at given location*)
-    (* val occupied : coordinate -> piece_type option *)
+    val find_piece : coordinate -> bool
   end
 
 module Registry : REGISTRY =
@@ -92,25 +91,8 @@ module Registry : REGISTRY =
       
     let get_pieces () = Registrants.elements !registrants ;;
   
-    (* let occupied (obj : piece_type) : piece_type list =
-      let dist_squared = cNEIGHBOR_RADIUS * cNEIGHBOR_RADIUS in
-      let x, y = obj#pos in
-      
-      (* all coordinates in a block around `obj` *)
-      let open Utilities in
-      cross_product (Absbook.range (x_bounded (x - cNEIGHBOR_RADIUS))
-                                   (x_bounded (x + cNEIGHBOR_RADIUS)))
-                    (Absbook.range (y_bounded (y - cNEIGHBOR_RADIUS))
-                                   (y_bounded (y + cNEIGHBOR_RADIUS)))
-      (* extract object lists at those coordinates if within the
-         radius *)
-      |> List.map (fun (nx, ny) ->
-                   if (nx - x) * (nx - x) + (ny - y) * (ny - y)
-                      <= dist_squared
-                   then
-                     map.(nx).(ny)
-                   else [])
-      (* and concatenate them *)
-      |> List.concat ;; *)
+    let find_piece coord = 
+      Registrants.exists (fun obj -> obj#get_pos = coord) !registrants
+    ;;
 
   end

@@ -35,14 +35,14 @@ let initialize_pieces () =
   R.register (new P.king E R1 true);
 
   (* initialize black pieces *)
-  R.register (new P.rook A R8 true);
-  R.register (new P.rook H R8 true);
-  R.register (new P.knight B R8 true);
-  R.register (new P.knight G R8 true);
-  R.register (new P.bishop C R8 true);
-  R.register (new P.bishop F R8 true);
-  R.register (new P.queen D R8 true);
-  R.register (new P.king E R8 true)
+  R.register (new P.rook A R8 false);
+  R.register (new P.rook H R8 false);
+  R.register (new P.knight B R8 false);
+  R.register (new P.knight G R8 false);
+  R.register (new P.bishop C R8 false);
+  R.register (new P.bishop F R8 false);
+  R.register (new P.queen D R8 false);
+  R.register (new P.king E R8 false)
 ;;
 
 

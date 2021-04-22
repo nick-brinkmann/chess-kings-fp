@@ -72,3 +72,38 @@ let int_to_file (i : int) : file =
     | 6 -> F
     | 7 -> G
     | 8 -> H ;;
+
+let int_to_rank (i : int) : rank = 
+  if i < 1 || i > 8 then raise (Invalid_argument "Not a valid rank")
+  else
+    match i with
+    | 1 -> R1
+    | 2 -> R2
+    | 3 -> R3
+    | 4 -> R4
+    | 5 -> R5
+    | 6 -> R6
+    | 7 -> R7
+    | 8 -> R8 ;;
+
+let file_to_string (f : file) : string =
+  match f with
+  | A -> "A"
+  | B -> "B"
+  | C -> "C"
+  | D -> "D"
+  | E -> "E"
+  | F -> "F"
+  | G -> "G"
+  | H -> "H" ;;
+
+let rank_to_string (r : rank) : string = 
+  match r with
+  | R1 -> "1"
+  | R2 -> "2"
+  | R3 -> "3"
+  | R4 -> "4"
+  | R5 -> "5"
+  | R6 -> "6"
+  | R7 -> "7"
+  | R8 -> "8" ;;

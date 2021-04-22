@@ -3,6 +3,7 @@ open Params ;;
 module G = Graphics ;;
 module T = Registry ;;
 module R = T.Registry ;;
+module P = Pieces ;;
 
 
 let move_on () =
@@ -45,21 +46,30 @@ let draw_board (board : int array array)
                             ) m) board ;;
 
 
-let get_bottom_left (x : int) (y : int) : int * int = 
-  let (new_x, new_y) = (x - (x mod cSQUARE_WIDTH),
-                          y - (y mod cSQUARE_HEIGHT)) in
-  new_x, new_y ;;
+let get_coords (x : int) (y : int) : coordinate = 
+  let reduce_x = x - (x mod cSQUARE_WIDTH) in
+  let reduce_y = y - (y mod cSQUARE_HEIGHT) in
+  let f = (int_to_file ((reduce_x / cSQUARE_WIDTH) + 1)) in
+  let r = (int_to_rank ((reduce_y / cSQUARE_HEIGHT) + 1)) in
+  f, r
+;;
+
 
 let print_coords () = 
   let s = G.wait_next_event [G.Button_down] in
   let x = s.mouse_x in
   let y = s.mouse_y in
-  let (corner_x, corner_y) = get_bottom_left x y in
-  (* G.moveto x y ; *)
-  (* G.set_color G.red; *)
-  (* G.draw_string ((string_of_int x) ^ ", " ^ (string_of_int y)) *)
-  G.set_color G.red;
-  G.fill_rect corner_x corner_y cSQUARE_WIDTH cSQUARE_HEIGHT
+  let (f, r) = get_coords x y in
+  G.set_color G.magenta;
+  G.moveto x y;
+  (* G.draw_string ((file_to_string f) ^ (rank_to_string r)) *)
+  if not (R.find_piece (f, r)) then 
+    (G.moveto x y;
+    G.set_color G.red;
+    G.draw_string "No piece here")
+  else
+    (G.set_color G.red;
+    G.fill_rect x y cSQUARE_WIDTH cSQUARE_HEIGHT)
 ;; 
 
 
@@ -80,6 +90,10 @@ let render pieces board =
       -- Make move = when a valid input is given check
                     that move can be made and then 
                     modify piece value or not *)
+
+  (* TODO: Write function to get chess coordinate
+      and then use set.find or set.filter to retrieve
+      piece at this square or None if none is there *)
   print_coords ();
 
   G.synchronize () 
