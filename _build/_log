@@ -2,19 +2,27 @@
 # Target: run.ml.depends, tags: { package(CS51Utils), package(graphics), warn(A-4-33-40-41-42-43-34-44), extension:ml, file:run.ml, ocaml, ocamldep, quiet, strict-sequence, thread, traverse, use_str }
 ocamlfind ocamldep -package graphics -package CS51Utils -modules run.ml > run.ml.depends # cached
 # Target: simulate_game.ml.depends, tags: { package(CS51Utils), package(graphics), warn(A-4-33-40-41-42-43-34-44), extension:ml, file:simulate_game.ml, ocaml, ocamldep, quiet, strict-sequence, thread, traverse, use_str }
-ocamlfind ocamldep -package graphics -package CS51Utils -modules simulate_game.ml > simulate_game.ml.depends
+ocamlfind ocamldep -package graphics -package CS51Utils -modules simulate_game.ml > simulate_game.ml.depends # cached
 # Target: game.ml.depends, tags: { package(CS51Utils), package(graphics), warn(A-4-33-40-41-42-43-34-44), extension:ml, file:game.ml, ocaml, ocamldep, quiet, strict-sequence, thread, traverse, use_str }
 ocamlfind ocamldep -package graphics -package CS51Utils -modules game.ml > game.ml.depends # cached
 # Target: game.cmo, tags: { package(CS51Utils), package(graphics), warn(A-4-33-40-41-42-43-34-44), byte, compile, extension:cmo, extension:ml, file:game.cmo, file:game.ml, implem, ocaml, quiet, strict-sequence, thread, traverse, use_str }
 ocamlfind ocamlc -c -thread -strict-sequence -package graphics -package CS51Utils -w A-4-33-40-41-42-43-34-44 -o game.cmo game.ml # cached
+# Target: pieces.ml.depends, tags: { package(CS51Utils), package(graphics), warn(A-4-33-40-41-42-43-34-44), extension:ml, file:pieces.ml, ocaml, ocamldep, quiet, strict-sequence, thread, traverse, use_str }
+ocamlfind ocamldep -package graphics -package CS51Utils -modules pieces.ml > pieces.ml.depends # cached
 # Target: visualization.ml.depends, tags: { package(CS51Utils), package(graphics), warn(A-4-33-40-41-42-43-34-44), extension:ml, file:visualization.ml, ocaml, ocamldep, quiet, strict-sequence, thread, traverse, use_str }
-ocamlfind ocamldep -package graphics -package CS51Utils -modules visualization.ml > visualization.ml.depends # cached
+ocamlfind ocamldep -package graphics -package CS51Utils -modules visualization.ml > visualization.ml.depends
+# Target: registry.ml.depends, tags: { package(CS51Utils), package(graphics), warn(A-4-33-40-41-42-43-34-44), extension:ml, file:registry.ml, ocaml, ocamldep, quiet, strict-sequence, thread, traverse, use_str }
+ocamlfind ocamldep -package graphics -package CS51Utils -modules registry.ml > registry.ml.depends # cached
+# Target: registry.cmo, tags: { package(CS51Utils), package(graphics), warn(A-4-33-40-41-42-43-34-44), byte, compile, extension:cmo, extension:ml, file:registry.cmo, file:registry.ml, implem, ocaml, quiet, strict-sequence, thread, traverse, use_str }
+ocamlfind ocamlc -c -thread -strict-sequence -package graphics -package CS51Utils -w A-4-33-40-41-42-43-34-44 -o registry.cmo registry.ml # cached
 # Target: visualization.cmo, tags: { package(CS51Utils), package(graphics), warn(A-4-33-40-41-42-43-34-44), byte, compile, extension:cmo, extension:ml, file:visualization.cmo, file:visualization.ml, implem, ocaml, quiet, strict-sequence, thread, traverse, use_str }
-ocamlfind ocamlc -c -thread -strict-sequence -package graphics -package CS51Utils -w A-4-33-40-41-42-43-34-44 -o visualization.cmo visualization.ml # cached
+ocamlfind ocamlc -c -thread -strict-sequence -package graphics -package CS51Utils -w A-4-33-40-41-42-43-34-44 -o visualization.cmo visualization.ml
+# Target: pieces.cmo, tags: { package(CS51Utils), package(graphics), warn(A-4-33-40-41-42-43-34-44), byte, compile, extension:cmo, extension:ml, file:pieces.cmo, file:pieces.ml, implem, ocaml, quiet, strict-sequence, thread, traverse, use_str }
+ocamlfind ocamlc -c -thread -strict-sequence -package graphics -package CS51Utils -w A-4-33-40-41-42-43-34-44 -o pieces.cmo pieces.ml # cached
 # Target: simulate_game.cmo, tags: { package(CS51Utils), package(graphics), warn(A-4-33-40-41-42-43-34-44), byte, compile, extension:cmo, extension:ml, file:simulate_game.cmo, file:simulate_game.ml, implem, ocaml, quiet, strict-sequence, thread, traverse, use_str }
-ocamlfind ocamlc -c -thread -strict-sequence -package graphics -package CS51Utils -w A-4-33-40-41-42-43-34-44 -o simulate_game.cmo simulate_game.ml
+ocamlfind ocamlc -c -thread -strict-sequence -package graphics -package CS51Utils -w A-4-33-40-41-42-43-34-44 -o simulate_game.cmo simulate_game.ml # cached
 # Target: run.cmo, tags: { package(CS51Utils), package(graphics), warn(A-4-33-40-41-42-43-34-44), byte, compile, extension:cmo, extension:ml, file:run.cmo, file:run.ml, implem, ocaml, quiet, strict-sequence, thread, traverse, use_str }
 ocamlfind ocamlc -c -thread -strict-sequence -package graphics -package CS51Utils -w A-4-33-40-41-42-43-34-44 -o run.cmo run.ml # cached
 # Target: run.byte, tags: { package(CS51Utils), package(graphics), warn(A-4-33-40-41-42-43-34-44), byte, dont_link_with, extension:byte, file:run.byte, link, ocaml, program, quiet, strict-sequence, thread, traverse, use_str }
-ocamlfind ocamlc -linkpkg str.cma -thread -package graphics -package CS51Utils game.cmo visualization.cmo simulate_game.cmo run.cmo -o run.byte
+ocamlfind ocamlc -linkpkg str.cma -thread -package graphics -package CS51Utils game.cmo registry.cmo visualization.cmo pieces.cmo simulate_game.cmo run.cmo -o run.byte
 # Compilation successful.
