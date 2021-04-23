@@ -1,1 +1,0 @@
-let _ = Simulate_game.run () ;;

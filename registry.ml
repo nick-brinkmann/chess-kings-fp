@@ -64,6 +64,11 @@ module type REGISTRY =
 
     (* returns true if square contains any piece *)
     val contains_any_piece : coordinate -> bool
+
+    (* is_piece_along_line_from square1 square2 -- returns true if there is 
+      any piece on the line from square1 to square2 EXCLUDING the starting and 
+      ending squares *)
+    val is_piece_along_line_from : coordinate -> coordinate -> bool
   end
 
 module Registry : REGISTRY =
@@ -131,20 +136,55 @@ module Registry : REGISTRY =
       | None -> false 
       | Some _piece -> true ;;
 
-    (* checks whether there's a piece along the given line or diagonal *)
+    (* checks whether there's a piece along the given line or diagonal
+       EXCLUDING the starting square AND EXCLUDING the ending square *)
     let is_piece_along_line_from (start_coord : coordinate) 
                                  (end_coord : coordinate) : bool =
       (* turns into int representation *)
-      let sf, sr = coord_to_int start_coord in
-      let ef, er = coord_to_int end_coord in
+      let sf, sr = coord_to_int start_coord in (* starting file and rank *)
+      let ef, er = coord_to_int end_coord in (* ending file and rank *)
 
-      (* helper function to generate list *)
+      (* checks that the coordinates given do, in fact, form a line *)
+      if not ((sf - ef = 0) (* vertical *)
+            || (sr - er = 0) (* horizontal *)
+            || (abs (sf - ef) = abs (sr - er))) (* diagonal *) then 
+      raise (Invalid_argument "is_piece_along_line_from: not a line or diagonal");
 
-      (* checks that you're using a vertical line *)
-      if sf - ef = 0 then 
-        begin
+      let dist_x = ef - sf in (* horizontal distance travelled *)
+      let dist_y = er - sr in (* vertical distance *)
 
-        end
+      (* helper function to generate list of squares to check *)
+      let rec make_lst_to_check 
+        (start_x : int) (start_y : int) (* starting square *)
+        (dx : int) (dy : int) (* distances needed to travel in x and y direction *)
+        (acc : (int * int) list) =
+
+        (* returns a length 1 step in direction of z *)
+        let norm (z : int) : int = z / (abs z) in 
+
+        (* finished moving *)
+        if dx = 0 && dy = 0 then acc else (* note this EXCLUDES ending square *) 
+        let norm_x = norm dx in 
+        let norm_y = norm dy in 
+        make_lst_to_check (start_x + norm_x) (start_y + norm_y) 
+                     (dx - norm_x) (dy - norm_y) ((start_x, start_y) :: acc)
+        (* note this INCLUDES the starting square. We manually remove it in the
+           next lines *)
+      in 
+      let lst_to_check = make_lst_to_check sf sr dist_x dist_y [] 
+        |> List.rev 
+        |> List.tl (* removes starting square. MAYBE BAD DESIGN *)
+      in 
+      lst_to_check
+        |> (List.map int_to_coord) (* converts to coordinate list *)
+        |> (List.map contains_any_piece) (* checks whether piece on each square. now bool list *)
+        |> (List.for_all not) (* returns true if and only if all elements are false *)
+        |> not (* if above was true, then NO pieces were in between. So we flip *)
+    ;;
+
+
+
+
 
 
 

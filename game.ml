@@ -89,6 +89,9 @@ let int_to_rank (i : int) : rank =
     | 7 -> R8
     | _ -> raise (Invalid_argument "Not a valid rank") ;;
 
+let int_to_coord (fi, ra : int * int) : coordinate =
+  (int_to_file fi, int_to_rank ra) ;;
+
 let file_to_string (f : file) : string =
   match f with
   | A -> "A"
