@@ -1,5 +1,5 @@
 (* ............................................................................
-                        Class type for pieces
+                        Class types for pieces
    ......................................................................... *)
 
 open Game ;;
@@ -46,8 +46,8 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
 class pawn (initfile : file) (initrank : rank) (player : bool) =
 object (self)
   inherit piece initfile 
-                 initrank
-                 player
+                initrank
+                player
            as super
 
   method can_be_valid_move (end_file, end_rank as coord: coordinate) : bool = 
@@ -65,7 +65,9 @@ object (self)
        (R.contains_enemy_piece super#get_color coord) then true 
     (* moving forward two squares *)
     else is_at_starting_square && end_fi = curr_fi && 
-      (end_ra - curr_ra = (if player then 2 else ~-2))
+      (end_ra - curr_ra = (if player then 2 else ~-2)) &&
+      (not (R.is_piece_along_line_from coord super#get_pos)) &&
+      (not (R.contains_any_piece coord))
 
 
    method! draw : unit = 
@@ -82,6 +84,19 @@ object(self)
                 player 
           as super
 
+  method can_be_valid_move (end_file, end_rank as coord : coordinate) : bool =
+    (* ensures exactly one of rank and file is unchanged *)
+    let curr_file, curr_rank = super#get_pos in
+    (* exclusive or, then negated. Checks that exactly one of current rank and
+       current file is different to end rank and end file *) 
+    if not ((curr_file <> end_file) <> (curr_rank <> end_rank)) then false else
+
+    (* verifies that there is no piece between current square and final square, 
+       and that no friendly piece on final square *)
+    (not (R.is_piece_along_line_from coord super#get_pos)) && 
+    (not (R.contains_own_piece super#get_color coord))
+
+
   (* method can_be_valid_move (end_file, end_rank : coordinate) : bool = 
     let (curr_file, curr_rank) = super#get_pos in  *)
    method! draw : unit = 
@@ -96,6 +111,16 @@ object(self)
   initrank
   player 
   as super
+
+  method can_be_valid_move (coord : coordinate) : bool =
+    let curr_file, curr_rank = coord_to_int super#get_pos in 
+    let end_file, end_rank = coord_to_int coord in
+    (* ensures sum of absolute value of changes to rank and file is 3 *)
+    (abs (curr_file - end_file)) + (abs (curr_rank - end_rank)) = 3 &&
+    (* ensures no friendly piece at ending square *)
+    (not (R.contains_own_piece super#get_color coord))
+
+
 
   method! draw : unit = 
    super#draw;
