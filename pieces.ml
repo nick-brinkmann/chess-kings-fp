@@ -134,6 +134,20 @@ object(self)
   player 
   as super
 
+  method can_be_valid_move (coord : coordinate) : bool =
+    (* convert to integer representation *)
+    let curr_file, curr_rank = coord_to_int super#get_pos in 
+    let end_file, end_rank = coord_to_int coord in 
+
+    (* checks moving along a diagonal *)
+    let dist_x = end_file - curr_file in 
+    let dist_y = end_rank - curr_rank in 
+    (abs dist_x = abs dist_y) && (dist_x <> 0) &&
+    (* no pieces along the way *)
+    (not (R.is_piece_along_line_from super#get_pos coord)) &&
+    (* no friendly piece at ending square *)
+    (not (R.contains_own_piece super#get_color coord))
+
   method! draw : unit = 
    super#draw;
     G.draw_string "Bishop"
