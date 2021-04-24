@@ -29,6 +29,8 @@ class type piece_type =
 
     method get_color : bool
 
+    method can_be_valid_move : coordinate -> bool
+
   end ;;
 
 (*....................................................................
@@ -50,10 +52,14 @@ module type REGISTRY =
         registered pieces. *)
     val get_pieces : unit -> piece_type list
     
+    val move_piece : coordinate -> coordinate -> unit
+
     (* Returns piece_type option:
         - None if there is no piece on corresponding square
         - Some Piece if a piece is found *)
     val find_piece : coordinate -> (piece_type option)
+
+    val subset : bool -> (piece_type list)
 
     (* contains_enemy_piece your_color coordinate -- returns true if square 
       contains an enemy piece, else false *)
@@ -121,6 +127,17 @@ module Registry : REGISTRY =
       let fi, ra = coord_to_int c in 
       position.(fi).(ra) ;;
 
+    let move_piece (start : coordinate) (destination : coordinate) : unit =
+      let (start_f, start_r) = coord_to_int start in
+      let (end_f, end_r) = coord_to_int destination in
+      let piece = position.(start_f).(start_r) in
+      position.(start_f).(start_r) <- None;
+      position.(end_f).(end_r) <- piece ;;
+
+    let subset (color : bool) : piece_type list = 
+      let s  = Registrants.filter (fun obj -> obj#get_color = color) !registrants in
+      Registrants.elements s ;;
+
     let contains_enemy_piece (your_color : bool) (coord : coordinate) : bool = 
       match find_piece coord with 
       | None -> false 
@@ -160,7 +177,8 @@ module Registry : REGISTRY =
         (acc : (int * int) list) =
 
         (* returns a length 1 step in direction of z *)
-        let norm (z : int) : int = z / (abs z) in 
+        let norm (z : int) : int = 
+          if z = 0 then 0 else z / (abs z) in 
 
         (* finished moving *)
         if dx = 0 && dy = 0 then acc else (* note this EXCLUDES ending square *) 
@@ -181,12 +199,6 @@ module Registry : REGISTRY =
         |> (List.for_all not) (* returns true if and only if all elements are false *)
         |> not (* if above was true, then NO pieces were in between. So we flip *)
     ;;
-
-
-
-
-
-
 
 
   end

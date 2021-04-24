@@ -61,7 +61,21 @@ let get_coords (x : int) (y : int) : coordinate =
 ;;
 
 
-let print_coords () = 
+let move_piece (piece : T.piece_type) = 
+  let s = G.wait_next_event [G.Button_down] in
+  let x = s.mouse_x in
+  let y = s.mouse_y in
+  let (f, r) = get_coords x y in
+  if not (piece#can_be_valid_move (f, r)) then
+    (G.set_color G.red;
+    G.draw_string "Cannot move here";)
+  else
+    (piece#make_move (f, r);
+    piece#draw)
+;;
+
+
+let rec pick_piece () = 
   let s = G.wait_next_event [G.Button_down] in
   let x = s.mouse_x in
   let y = s.mouse_y in
@@ -72,8 +86,10 @@ let print_coords () =
   match p with
   | None -> (G.moveto x y;
             G.set_color G.red;
-            G.draw_string "No piece here")
-  | Some piece -> highlight_square piece#get_pos
+            G.draw_string "No piece here";
+            pick_piece ())
+  | Some piece -> (highlight_square piece#get_pos;
+                  move_piece piece)
 ;; 
 
 
@@ -98,7 +114,7 @@ let render pieces board =
   (* TODO: Write function to get chess coordinate
       and then use set.find or set.filter to retrieve
       piece at this square or None if none is there *)
-  print_coords ();
+  pick_piece ();
 
   G.synchronize () 
 ;;

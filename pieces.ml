@@ -5,7 +5,8 @@
 open Game ;;
 open Params ;;
 module G = Graphics ;;
-module R = Registry.Registry ;;
+module T = Registry ;;
+module R = T.Registry ;;
 
 class piece (initfile : file) (initrank : rank) (p : bool) = 
   object (self)
@@ -29,7 +30,10 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
     method make_move ((new_f, new_r) : coordinate) = 
       f <- new_f;
       r <- new_r;
-      moves <- moves + 1
+      moves <- moves + 1;
+      R.move_piece self#get_pos (new_f, new_r)
+
+    method can_be_valid_move (c : coordinate) : bool = true
 
     (* draw ?color -- draws a piece, with an optional new color *)
     method draw : unit = 
@@ -50,7 +54,7 @@ object (self)
                 player
            as super
 
-  method can_be_valid_move (end_file, end_rank as coord: coordinate) : bool = 
+  method! can_be_valid_move (end_file, end_rank as coord: coordinate) : bool = 
     let end_fi, end_ra = (file_to_int end_file), (rank_to_int end_rank) in
     let (curr_fi, curr_ra) = (file_to_int (fst super#get_pos)), 
                              (rank_to_int (snd super#get_pos)) 
@@ -84,7 +88,7 @@ object(self)
                 player 
           as super
 
-  method can_be_valid_move (end_file, end_rank as coord : coordinate) : bool =
+  method! can_be_valid_move (end_file, end_rank as coord : coordinate) : bool =
     (* ensures exactly one of rank and file is unchanged *)
     let curr_file, curr_rank = super#get_pos in
     (* exclusive or, then negated. Checks that exactly one of current rank and
@@ -112,7 +116,7 @@ object(self)
   player 
   as super
 
-  method can_be_valid_move (coord : coordinate) : bool =
+  method! can_be_valid_move (coord : coordinate) : bool =
     let curr_file, curr_rank = coord_to_int super#get_pos in 
     let end_file, end_rank = coord_to_int coord in
     (* ensures sum of absolute value of changes to rank and file is 3 *)
@@ -134,7 +138,7 @@ object(self)
   player 
   as super
 
-  method can_be_valid_move (coord : coordinate) : bool =
+  method! can_be_valid_move (coord : coordinate) : bool =
     (* convert to integer representation *)
     let curr_file, curr_rank = coord_to_int super#get_pos in 
     let end_file, end_rank = coord_to_int coord in 
@@ -160,6 +164,14 @@ object(self)
   player 
   as super
 
+  method! can_be_valid_move (coord : coordinate) : bool =
+    (* Registers a new bishop and rook at the same starting square. If either 
+      of them can move to the ending square, the move is valid. *)
+    let new_rook = (new rook (fst super#get_pos) (snd super#get_pos) true) in 
+    let new_bishop = (new bishop (fst super#get_pos) (snd super#get_pos) true) in 
+    (new_rook#can_be_valid_move coord) || (new_bishop#can_be_valid_move coord)
+
+
   method! draw : unit = 
    super#draw;
     G.draw_string "Queen"
@@ -171,6 +183,20 @@ object(self)
   initrank
   player 
   as super
+
+  method! can_be_valid_move (coord : coordinate) : bool = 
+    (* Checks that no opponent pieces attack the square the king moves to *)
+    let opponent_pieces = R.subset (not (super#get_color)) in 
+    let is_not_attacked (coord : coordinate) (pieces : T.piece_type list) : bool = 
+      List.for_all (fun obj -> not (obj#can_be_valid_move coord)) pieces in
+    let chebyshev_distance_to (end_coord : coordinate) : int = 
+      let start_x, start_y = coord_to_int super#get_pos in 
+      let end_x, end_y = coord_to_int end_coord in 
+      max (abs (start_x - end_x)) (abs (start_y - end_y)) in 
+    (* no pieces attacking ending square and Chebyshev distance = 1 *)
+    (is_not_attacked coord opponent_pieces) && ((chebyshev_distance_to coord) = 1)
+    (* NEED TO STILL ACCOUNT FOR CASTLING*)
+
 
   method! draw : unit = 
    super#draw;
