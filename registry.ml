@@ -18,9 +18,11 @@ module G = Graphics ;;
 (*....................................................................
   The objects in the world
  *)
- 
+
 class type piece_type =
   object
+    method is_king : bool
+
     method get_pos : coordinate
 
     method make_move : coordinate -> unit
@@ -30,6 +32,8 @@ class type piece_type =
     method get_color : bool
 
     method can_be_valid_move : coordinate -> bool
+
+    method chebyshev_distance_to : coordinate -> int
 
   end ;;
 
@@ -49,6 +53,8 @@ module type REGISTRY =
     val deregister : piece_type -> unit
 
     val size_of_registrants : unit -> int
+
+    val get_position : (piece_type option) array array
 
     (* get_pieces () -- Returns a list of all of the curently 
         registered pieces. *)
@@ -77,6 +83,10 @@ module type REGISTRY =
       any piece on the line from square1 to square2 EXCLUDING the starting and 
       ending squares *)
     val is_piece_along_line_from : coordinate -> coordinate -> bool
+
+    (* is_plyaer_in_check player -- returns true if the player of the given 
+      color is currently in check. *)
+    (* val is_player_in_check : bool -> bool *)
   end
 
 let order_pieces (p1 : piece_type) (p2 : piece_type) = 
@@ -102,6 +112,8 @@ module Registry : REGISTRY =
        2-D location *)
     let position : (piece_type option) array array =
       make_matrix 8 8 None ;;
+
+    let get_position = position ;;
 
     (* The required REGISTRY functions. See REGISTRY module signature
        for documentation *)
@@ -213,6 +225,22 @@ module Registry : REGISTRY =
         |> (List.for_all not) (* returns true if and only if all elements are false *)
         |> not (* if above was true, then NO pieces were in between. So we flip *)
     ;;
+
+    (* Checks if player is in check by checking whether pieces are attacking
+          the square that their king is occupying *)
+    (* let is_player_in_check (player : bool) : bool = 
+      let opponent_pieces = subset (not player) in 
+      let opp_king = List.find (fun obj -> obj#is_king) opponent_pieces in
+      let opp_pieces_not_king = 
+        List.filter (fun obj -> not obj#is_king) opponent_pieces in 
+      let my_king = 
+        subset player 
+        |> List.find (fun obj -> obj#is_king)
+      in
+      let my_king_pos = my_king#get_pos in
+      (List.for_all (fun obj -> not (obj#can_be_valid_move my_king_pos)) opp_pieces_not_king) &&
+      (opp_king#chebyshev_distance_to my_king_pos <> 1)
+    ;; *)
 
 
   end

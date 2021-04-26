@@ -18,7 +18,7 @@ let test_array = [|
 
 let initialize_pieces () = 
   (* initialize pawns *)
-  for i = 0 to 4 do
+  for i = 0 to 7 do
     let f = int_to_file i in
     R.register ((new P.pawn f R2 true) :> T.piece_type);
     R.register ((new P.pawn f R7 false) :> T.piece_type);
@@ -53,11 +53,8 @@ let run () =
   
   let end_game = ref false in
   while not !end_game do
-    Graphics.clear_graph ();
-    (* Viz.draw_board test_array (Viz.cX_DIMENSION) (Viz.cY_DIMENSION);
-    Viz.light_up (); *)
-    Viz.render  (R.get_pieces ()) 
-                test_array ;
+
+    Viz.render R.get_position ;
 
     if not (Viz.move_on ()) then end_game := true
   done;;

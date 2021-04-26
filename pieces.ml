@@ -19,6 +19,9 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
     (* method player_color : bool = player *)
     val color = if p then cWHITE_PIECE_COLOR else cBLACK_PIECE_COLOR
 
+    (* is of king type *)
+    method is_king = false
+
     (* get_color -- returns true for a white piece, false for a black piece *)
     method get_color : bool = player
 
@@ -28,12 +31,20 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
 
     (* update_pos -- updates the coordinate of a piece *)
     method make_move ((new_f, new_r) : coordinate) = 
+      R.move_piece self#get_pos (new_f, new_r);
       f <- new_f;
       r <- new_r;
-      moves <- moves + 1;
-      R.move_piece self#get_pos (new_f, new_r)
+      moves <- moves + 1
 
-    method can_be_valid_move (_c : coordinate) : bool = true
+    method can_be_valid_move (c : coordinate) : bool = 
+      (* let old = self#get_pos in 
+      self#make_move c;
+      let is_valid = not (R.is_player_in_check self#get_color) in 
+      self#make_move old;
+      is_valid *)
+      true
+
+    method chebyshev_distance_to (_c : coordinate) : int = ~-1
 
     (* draw ?color -- draws a piece, with an optional new color *)
     method draw : unit = 
@@ -54,7 +65,8 @@ object (self)
                 player
            as super
 
-  method! can_be_valid_move (end_file, end_rank as coord: coordinate) : bool = 
+  method! can_be_valid_move (end_file, end_rank as coord: coordinate) : bool =
+    if not (super#can_be_valid_move coord) then false else 
     let end_fi, end_ra = (file_to_int end_file), (rank_to_int end_rank) in
     let (curr_fi, curr_ra) = (file_to_int (fst super#get_pos)), 
                              (rank_to_int (snd super#get_pos)) 
@@ -62,6 +74,7 @@ object (self)
     let is_at_starting_square = (moves = 0) in 
     (* moving directly forward 1 square *)
     if (end_ra - curr_ra = (if player then 1 else ~-1)) &&
+      (end_fi = curr_fi) &&
       (not (R.contains_any_piece coord)) then true
     (* capturing diagonally *)
     else if (end_ra - curr_ra = (if player then 1 else ~-1)) && 
@@ -89,6 +102,7 @@ object(self)
           as super
 
   method! can_be_valid_move (end_file, end_rank as coord : coordinate) : bool =
+    if not (super#can_be_valid_move coord) then false else 
     (* ensures exactly one of rank and file is unchanged *)
     let curr_file, curr_rank = super#get_pos in
     (* exclusive or, then negated. Checks that exactly one of current rank and
@@ -117,6 +131,7 @@ object(self)
   as super
 
   method! can_be_valid_move (coord : coordinate) : bool =
+    if not (super#can_be_valid_move coord) then false else 
     let curr_file, curr_rank = coord_to_int super#get_pos in 
     let end_file, end_rank = coord_to_int coord in
     (* ensures sum of absolute value of changes to rank and file is 3 *)
@@ -139,6 +154,7 @@ object(self)
   as super
 
   method! can_be_valid_move (coord : coordinate) : bool =
+    if not (super#can_be_valid_move coord) then false else 
     (* convert to integer representation *)
     let curr_file, curr_rank = coord_to_int super#get_pos in 
     let end_file, end_rank = coord_to_int coord in 
@@ -165,6 +181,7 @@ object(self)
   as super
 
   method! can_be_valid_move (coord : coordinate) : bool =
+    if not (super#can_be_valid_move coord) then false else 
     (* Registers a new bishop and rook at the same starting square. If either 
       of them can move to the ending square, the move is valid. *)
     let new_rook = (new rook (fst super#get_pos) (snd super#get_pos) true) in 
@@ -184,31 +201,28 @@ object(self)
   player 
   as super
 
+  method! chebyshev_distance_to (end_coord : coordinate) : int = 
+    let start_x, start_y = coord_to_int super#get_pos in 
+    let end_x, end_y = coord_to_int end_coord in 
+    max (abs (start_x - end_x)) (abs (start_y - end_y))
+
+  method! is_king = true
+
   method! can_be_valid_move (coord : coordinate) : bool = 
     (* Checks that no opponent pieces attack the square the king moves to *)
     let opponent_pieces = R.subset (not (super#get_color)) in 
-    Printf.printf "%d" (R.size_of_registrants ());
-    (* let rec print_opp_pieces lst =
-      match lst with 
-      | [] -> ()
-      | obj :: tl -> 
-        (let file = file_to_string (fst obj#get_pos) in 
-         let rank = rank_to_string (snd obj#get_pos) in 
-         Printf.printf "File: %s" file;
-         Printf.printf "Rank: %s" rank;
-         Printf.printf "\n";
-         print_opp_pieces tl
-        )
-    in *)
-    (* print_opp_pieces opponent_pieces; *)
+    let opp_king = 
+      List.filter (fun obj -> obj#is_king) opponent_pieces
+      |> List.hd 
+    in 
+    let opp_pieces_not_king = 
+      List.filter (fun obj -> not obj#is_king) opponent_pieces in 
     let is_not_attacked (coord : coordinate) (pieces : T.piece_type list) : bool = 
       List.for_all (fun obj -> not (obj#can_be_valid_move coord)) pieces in
-    let chebyshev_distance_to (end_coord : coordinate) : int = 
-      let start_x, start_y = coord_to_int super#get_pos in 
-      let end_x, end_y = coord_to_int end_coord in 
-      max (abs (start_x - end_x)) (abs (start_y - end_y)) in 
     (* no pieces attacking ending square and Chebyshev distance = 1 *)
-    (is_not_attacked coord opponent_pieces) && ((chebyshev_distance_to coord) = 1)
+    (is_not_attacked coord opp_pieces_not_king) && 
+    ((self#chebyshev_distance_to coord) = 1) &&
+    ((opp_king#chebyshev_distance_to coord) > 1)
     (* NEED TO STILL ACCOUNT FOR CASTLING*)
 
 
@@ -218,3 +232,17 @@ object(self)
 end 
 
 ;;
+
+(* let rec print_opp_pieces lst =
+  match lst with 
+  | [] -> ()
+  | obj :: tl -> 
+    (let file = file_to_string (fst obj#get_pos) in 
+      let rank = rank_to_string (snd obj#get_pos) in 
+      Printf.printf "File: %s" file;
+      Printf.printf "Rank: %s" rank;
+      Printf.printf "\n";
+      print_opp_pieces tl
+    )
+in *)
+(* print_opp_pieces opponent_pieces; *)
