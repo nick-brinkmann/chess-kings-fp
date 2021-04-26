@@ -33,7 +33,7 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
       moves <- moves + 1;
       R.move_piece self#get_pos (new_f, new_r)
 
-    method can_be_valid_move (c : coordinate) : bool = true
+    method can_be_valid_move (_c : coordinate) : bool = true
 
     (* draw ?color -- draws a piece, with an optional new color *)
     method draw : unit = 
@@ -187,6 +187,20 @@ object(self)
   method! can_be_valid_move (coord : coordinate) : bool = 
     (* Checks that no opponent pieces attack the square the king moves to *)
     let opponent_pieces = R.subset (not (super#get_color)) in 
+    Printf.printf "%d" (R.size_of_registrants ());
+    (* let rec print_opp_pieces lst =
+      match lst with 
+      | [] -> ()
+      | obj :: tl -> 
+        (let file = file_to_string (fst obj#get_pos) in 
+         let rank = rank_to_string (snd obj#get_pos) in 
+         Printf.printf "File: %s" file;
+         Printf.printf "Rank: %s" rank;
+         Printf.printf "\n";
+         print_opp_pieces tl
+        )
+    in *)
+    (* print_opp_pieces opponent_pieces; *)
     let is_not_attacked (coord : coordinate) (pieces : T.piece_type list) : bool = 
       List.for_all (fun obj -> not (obj#can_be_valid_move coord)) pieces in
     let chebyshev_distance_to (end_coord : coordinate) : int = 

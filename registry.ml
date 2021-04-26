@@ -48,6 +48,8 @@ module type REGISTRY =
        registered. *)
     val deregister : piece_type -> unit
 
+    val size_of_registrants : unit -> int
+
     (* get_pieces () -- Returns a list of all of the curently 
         registered pieces. *)
     val get_pieces : unit -> piece_type list
@@ -77,12 +79,21 @@ module type REGISTRY =
     val is_piece_along_line_from : coordinate -> coordinate -> bool
   end
 
+let order_pieces (p1 : piece_type) (p2 : piece_type) = 
+  let p1x, p1y = coord_to_int p1#get_pos in 
+  let p2x, p2y = coord_to_int p2#get_pos in 
+  if p1x < p2x then 1
+  else if p1x > p2x then ~-1
+  else if p1y < p2y then 1
+  else if p1y > p2y then ~-1
+  else 0 ;;
+
 module Registry : REGISTRY =
   struct
     (* registrants -- An updatable set of all of the registered objects *)
     module Registrants =
       Set.Make (struct type t = piece_type
-                       let compare = compare
+                       let compare = order_pieces
                 end) ;;
 
     let registrants = ref Registrants.empty ;;
@@ -96,7 +107,7 @@ module Registry : REGISTRY =
        for documentation *)
       
     let register (obj : piece_type) : unit =
-      registrants := Registrants.add obj !registrants;
+      registrants := (Registrants.add obj !registrants);
       let f, r = obj#get_pos in
       let fi = file_to_int f in
       let ra = rank_to_int r in
@@ -117,6 +128,9 @@ module Registry : REGISTRY =
         end ;;
       
     let get_pieces () = Registrants.elements !registrants ;;
+
+    let size_of_registrants () : int = 
+      List.length (get_pieces ()) ;;
   
     (* let find_piece coord = 
       let subset = Registrants.filter (fun obj -> obj#get_pos = coord) !registrants in
