@@ -30,13 +30,18 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
       f, r
 
     (* update_pos -- updates the coordinate of a piece *)
-    method make_move ((new_f, new_r) : coordinate) = 
-      R.move_piece self#get_pos (new_f, new_r);
+    method make_move ((new_f, new_r) as coord : coordinate) : unit = 
+      (* if opponent piece at new coordinate, deregister that piece *)
+      (if R.contains_enemy_piece self#get_color coord then 
+          let Some opp_piece = R.find_piece coord in 
+          R.deregister opp_piece);
+      R.move_piece self#get_pos coord;
       f <- new_f;
       r <- new_r;
+      Printf.printf "%s \n" (coord_to_string coord);
       moves <- moves + 1
 
-    method can_be_valid_move (c : coordinate) : bool = 
+    method can_be_valid_move (_c : coordinate) : bool = 
       (* let old = self#get_pos in 
       self#make_move c;
       let is_valid = not (R.is_player_in_check self#get_color) in 

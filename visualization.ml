@@ -43,7 +43,7 @@ let draw_square (c : G.color) (y : int) (x : int) (w : int) (h : int) : unit =
 let draw_board (board : (T.piece_type option) array array) : unit =
   G.set_line_width cLINEWIDTH;
   Array.iteri (fun y m -> 
-                Array.iteri (fun x piece_opt ->
+                Array.iteri (fun x _piece_opt ->
                               if (x + y) mod 2 = 0 then draw_square cWHITECOLOR y x cSQUARE_WIDTH cSQUARE_HEIGHT
                               else draw_square cBLACKCOLOR y x cSQUARE_WIDTH cSQUARE_HEIGHT
                               (* match piece_opt with
@@ -114,8 +114,8 @@ let rec pick_piece () =
   |> List.iter (fun piece -> piece#draw) ;; *)
 
 let print_board (pos : (T.piece_type option) array array) : unit =
-  Array.iteri (fun y m -> 
-                Array.iteri (fun x piece_opt -> 
+  Array.iteri (fun _y m -> 
+                Array.iteri (fun _x piece_opt -> 
                       match piece_opt with
                       | None -> Printf.printf "O"
                       | Some _piece -> Printf.printf "X") m;

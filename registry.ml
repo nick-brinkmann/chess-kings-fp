@@ -144,14 +144,14 @@ module Registry : REGISTRY =
     let size_of_registrants () : int = 
       List.length (get_pieces ()) ;;
   
-    (* let find_piece coord = 
+    let find_piece coord = 
       let subset = Registrants.filter (fun obj -> obj#get_pos = coord) !registrants in
       Registrants.choose_opt subset
-    ;; *)
+    ;;
 
-    let find_piece (c : coordinate) : piece_type option =
+    (* let find_piece (c : coordinate) : piece_type option =
       let fi, ra = coord_to_int c in 
-      position.(fi).(ra) ;;
+      position.(fi).(ra) ;; *)
 
     let move_piece (start : coordinate) (destination : coordinate) : unit =
       let (start_f, start_r) = coord_to_int start in

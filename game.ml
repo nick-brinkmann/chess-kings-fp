@@ -113,3 +113,6 @@ let rank_to_string (r : rank) : string =
   | R6 -> "6"
   | R7 -> "7"
   | R8 -> "8" ;;
+
+let coord_to_string (f, r : coordinate) : string =
+  (file_to_string f) ^ (rank_to_string r) ;;
