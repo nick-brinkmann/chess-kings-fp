@@ -29,6 +29,8 @@ class type piece_type =
 
     method draw : unit
 
+    method name : string
+
     method get_color : bool
 
     method can_be_valid_move : coordinate -> bool
@@ -87,16 +89,13 @@ module type REGISTRY =
     (* is_plyaer_in_check player -- returns true if the player of the given 
       color is currently in check. *)
     (* val is_player_in_check : bool -> bool *)
+
+    (* prints the registry *)
+    val print_registry : unit -> unit
   end
 
 let order_pieces (p1 : piece_type) (p2 : piece_type) = 
-  let p1x, p1y = coord_to_int p1#get_pos in 
-  let p2x, p2y = coord_to_int p2#get_pos in 
-  if p1x < p2x then 1
-  else if p1x > p2x then ~-1
-  else if p1y < p2y then 1
-  else if p1y > p2y then ~-1
-  else 0 ;;
+  if p1 == p2 then 0 else compare p1 p2 ;;
 
 module Registry : REGISTRY =
   struct
@@ -107,6 +106,26 @@ module Registry : REGISTRY =
                 end) ;;
 
     let registrants = ref Registrants.empty ;;
+
+    let print_registry () : unit = 
+      let color_to_string (b : bool) : string = 
+        if b then "white" else "black" in
+      let all_pieces = Registrants.elements !registrants in 
+      let num_pieces = Registrants.cardinal !registrants in
+      let rec print_list (lst : piece_type list) : unit =
+        match lst with 
+        | [] -> ()
+        | hd :: tl -> 
+          Printf.printf "%s %s %s \n" 
+          (color_to_string hd#get_color) 
+          hd#name 
+          (coord_to_string hd#get_pos);
+          print_list tl
+      in
+      print_list all_pieces;
+      Printf.printf "%d \n" num_pieces;
+      Printf.printf "-------------------------\n"
+    ;;
 
     (* position -- A "map" of all the pieces, organized by
        2-D location *)
@@ -126,10 +145,12 @@ module Registry : REGISTRY =
       position.(fi).(ra) <- Some obj ;;
 
     let deregister (obj : piece_type) : unit =
+      Printf.printf "Deregistering now \n";
       let new_registrants = Registrants.remove obj !registrants in
       if new_registrants == !registrants then
         (* no obj removed; as of v4.03, physical equality guaranteed *)
-        raise (Invalid_argument "deregister: object not in registry to begin with")
+        (print_registry ();
+        raise (Invalid_argument "deregister: object not in registry to begin with"))
       else
         begin
           registrants := new_registrants;
@@ -144,9 +165,22 @@ module Registry : REGISTRY =
     let size_of_registrants () : int = 
       List.length (get_pieces ()) ;;
   
-    let find_piece coord = 
+    let find_piece coord : piece_type option = 
+      let color_to_string (b : bool) : string = 
+        if b then "white" else "black" in
       let subset = Registrants.filter (fun obj -> obj#get_pos = coord) !registrants in
-      Registrants.choose_opt subset
+      if Registrants.cardinal subset > 1 then 
+        raise (Invalid_argument "find_piece: Multiple pieces on the same square")
+      else
+      match Registrants.choose_opt subset with 
+      | None -> None 
+      | Some obj -> 
+        Printf.printf "%s %s %s \n" 
+        (color_to_string obj#get_color)
+        (obj#name)
+        (coord_to_string obj#get_pos);
+        Some obj
+      
     ;;
 
     (* let find_piece (c : coordinate) : piece_type option =
@@ -241,6 +275,29 @@ module Registry : REGISTRY =
       (List.for_all (fun obj -> not (obj#can_be_valid_move my_king_pos)) opp_pieces_not_king) &&
       (opp_king#chebyshev_distance_to my_king_pos <> 1)
     ;; *)
+
+    (* let print_registry () : unit = 
+      let color_to_string (b : bool) : string = 
+        if b then "white" else "black" in
+      let all_pieces = Registrants.elements !registrants in 
+      let num_pieces = Registrants.cardinal !registrants in
+      let rec print_list (lst : piece_type list) : unit =
+        match lst with 
+        | [] -> ()
+        | hd :: tl -> 
+          Printf.printf "%s %s %s \n" 
+          (color_to_string hd#get_color) 
+          hd#name 
+          (coord_to_string hd#get_pos);
+          print_list tl
+      in
+      print_list all_pieces;
+      Printf.printf "%d \n" num_pieces;
+      Printf.printf "-------------------------\n"
+    ;; *)
+
+
+    
 
 
   end

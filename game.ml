@@ -116,3 +116,6 @@ let rank_to_string (r : rank) : string =
 
 let coord_to_string (f, r : coordinate) : string =
   (file_to_string f) ^ (rank_to_string r) ;;
+
+let is_on_board (x, y : int * int) : bool = 
+  x >= 0 && x <= 7 && y >= 0 && y <= 7 ;;

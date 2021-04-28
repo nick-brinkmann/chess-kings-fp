@@ -16,6 +16,8 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
     val mutable r : rank = initrank
     val mutable moves : int = 0
     
+    method name : string = "piece"
+    
     (* method player_color : bool = player *)
     val color = if p then cWHITE_PIECE_COLOR else cBLACK_PIECE_COLOR
 
@@ -32,14 +34,25 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
     (* update_pos -- updates the coordinate of a piece *)
     method make_move ((new_f, new_r) as coord : coordinate) : unit = 
       (* if opponent piece at new coordinate, deregister that piece *)
-      (if R.contains_enemy_piece self#get_color coord then 
+      let delete_opp_piece () =
+      match R.find_piece coord with 
+      | None -> (* Printf.printf "No enemy piece here \n" *) () 
+      | Some piece -> if piece#get_color <> self#get_color then 
+        R.deregister piece
+      in
+      (* (if R.contains_enemy_piece self#get_color coord then 
           let Some opp_piece = R.find_piece coord in 
-          R.deregister opp_piece);
+          R.deregister opp_piece); *)
+      delete_opp_piece ();
       R.move_piece self#get_pos coord;
       f <- new_f;
       r <- new_r;
-      Printf.printf "%s \n" (coord_to_string coord);
-      moves <- moves + 1
+      (* Printf.printf "%s \n" (coord_to_string coord); *)
+      moves <- moves + 1;
+      (* match R.find_piece self#get_pos with
+      | None -> Printf.printf "she gone \n"
+      | Some piece -> 
+        Printf.printf "She right heeya: %s \n" (coord_to_string self#get_pos) *)
 
     method can_be_valid_move (_c : coordinate) : bool = 
       (* let old = self#get_pos in 
@@ -69,6 +82,8 @@ object (self)
                 initrank
                 player
            as super
+
+  method! name : string = "pawn"
 
   method! can_be_valid_move (end_file, end_rank as coord: coordinate) : bool =
     if not (super#can_be_valid_move coord) then false else 
@@ -106,6 +121,8 @@ object(self)
                 player 
           as super
 
+  method! name : string = "rook"
+
   method! can_be_valid_move (end_file, end_rank as coord : coordinate) : bool =
     if not (super#can_be_valid_move coord) then false else 
     (* ensures exactly one of rank and file is unchanged *)
@@ -135,6 +152,8 @@ object(self)
   player 
   as super
 
+  method! name : string = "knight"
+
   method! can_be_valid_move (coord : coordinate) : bool =
     if not (super#can_be_valid_move coord) then false else 
     let curr_file, curr_rank = coord_to_int super#get_pos in 
@@ -157,6 +176,8 @@ object(self)
   initrank
   player 
   as super
+
+  method! name : string = "bishop"
 
   method! can_be_valid_move (coord : coordinate) : bool =
     if not (super#can_be_valid_move coord) then false else 
@@ -185,12 +206,13 @@ object(self)
   player 
   as super
 
+  method! name : string = "queen"
+
   method! can_be_valid_move (coord : coordinate) : bool =
-    if not (super#can_be_valid_move coord) then false else 
     (* Registers a new bishop and rook at the same starting square. If either 
       of them can move to the ending square, the move is valid. *)
-    let new_rook = (new rook (fst super#get_pos) (snd super#get_pos) true) in 
-    let new_bishop = (new bishop (fst super#get_pos) (snd super#get_pos) true) in 
+    let new_rook = (new rook (fst super#get_pos) (snd super#get_pos) self#get_color) in 
+    let new_bishop = (new bishop (fst super#get_pos) (snd super#get_pos) self#get_color) in 
     (new_rook#can_be_valid_move coord) || (new_bishop#can_be_valid_move coord)
 
 
@@ -205,6 +227,8 @@ object(self)
   initrank
   player 
   as super
+
+  method! name : string = "king"
 
   method! chebyshev_distance_to (end_coord : coordinate) : int = 
     let start_x, start_y = coord_to_int super#get_pos in 
