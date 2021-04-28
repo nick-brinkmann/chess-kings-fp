@@ -237,6 +237,8 @@ object(self)
 
   method! is_king = true
 
+    (* TODO: King can currently move onto a square that contains its own piece *)
+
   method! can_be_valid_move (coord : coordinate) : bool = 
     (* Checks that no opponent pieces attack the square the king moves to *)
     let opponent_pieces = R.subset (not (super#get_color)) in 
