@@ -79,17 +79,27 @@ let rec move_piece (piece : T.piece_type) =
   let s = G.wait_next_event [G.Button_down] in
   let x = s.mouse_x in
   let y = s.mouse_y in
+  (* Converts x y coordinates in graphics windows to
+      chess coordinates *)
   let (f, r) = get_coords x y in
+  (* If piece is allowed to move to this square executes
+      move; otherwise alerts user of invalid move *)
   if not (piece#can_be_valid_move (f, r)) then
     (G.moveto x y;
     G.set_color G.red;
     G.draw_string "Cannot move here";
     move_piece piece)
   else
-    (piece#make_move (f, r);
-    G.clear_graph ();
-    draw_board R.get_position)
-;;
+    (let prev = piece#get_pos in
+    piece#make_move (f, r);
+    if R.player_not_in_check piece#get_color then
+      (G.clear_graph ();
+      draw_board R.get_position)
+    else
+      (piece#make_move (prev);
+      G.draw_string "Invalid move";
+      move_piece piece))
+    ;;
 
 
 let rec pick_piece () = 
@@ -105,20 +115,16 @@ let rec pick_piece () =
             G.set_color G.red;
             G.draw_string "No piece here";
             pick_piece ())
-  | Some piece -> if R.turn () = piece#get_color then
-                      (highlight_square piece#get_pos;
-                      move_piece piece)
-                  else
-                    (G.set_color G.red;
-                    G.draw_string "Not your piece";
-                    pick_piece ())
+  | Some piece -> 
+            if R.turn () = piece#get_color then
+              (highlight_square piece#get_pos;
+              move_piece piece)
+            else
+              (G.set_color G.red;
+              G.draw_string "Not your piece";
+              pick_piece ())
 ;;
 
-
-(*  Takes list of all pieces and draws them on board *)
-(* let render_pieces pieces =
-  pieces
-  |> List.iter (fun piece -> piece#draw) ;; *)
 
 let print_board (pos : (T.piece_type option) array array) : unit =
   Array.iteri (fun _y m -> 
@@ -134,8 +140,6 @@ let render board =
   G.clear_graph ();
   draw_board board;
 
-  (* render_pieces pieces ; *)
-
   (* At this point we need functions for logic of game
       -- Await move = wait for some type of input
                       whether a click, string, etc.
@@ -143,9 +147,6 @@ let render board =
                     that move can be made and then 
                     modify piece value or not *)
 
-  (* TODO: Write function to get chess coordinate
-      and then use set.find or set.filter to retrieve
-      piece at this square or None if none is there *)
   pick_piece ();
 
   G.synchronize () 

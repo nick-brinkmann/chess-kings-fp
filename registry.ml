@@ -92,7 +92,7 @@ module type REGISTRY =
 
     (* is_plyaer_in_check player -- returns true if the player of the given 
       color is currently in check. *)
-    (* val is_player_in_check : bool -> bool *)
+    val player_not_in_check : bool -> bool
 
     (* prints the registry *)
     val print_registry : unit -> unit
@@ -278,7 +278,7 @@ module Registry : REGISTRY =
 
     (* Checks if player is in check by checking whether pieces are attacking
           the square that their king is occupying *)
-    (* let is_player_in_check (player : bool) : bool = 
+    let player_not_in_check (player : bool) : bool = 
       let opponent_pieces = subset (not player) in 
       let opp_king = List.find (fun obj -> obj#is_king) opponent_pieces in
       let opp_pieces_not_king = 
@@ -289,8 +289,8 @@ module Registry : REGISTRY =
       in
       let my_king_pos = my_king#get_pos in
       (List.for_all (fun obj -> not (obj#can_be_valid_move my_king_pos)) opp_pieces_not_king) &&
-      (opp_king#chebyshev_distance_to my_king_pos <> 1)
-    ;; *)
+      (opp_king#chebyshev_distance_to my_king_pos > 1)
+    ;;
 
     (* let print_registry () : unit = 
       let color_to_string (b : bool) : string = 

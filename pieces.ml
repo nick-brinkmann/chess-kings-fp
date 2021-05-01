@@ -230,6 +230,8 @@ object(self)
 
   method! name : string = "king"
 
+  (* QUESTION: Is there any reason we override this here, instead of just defining
+      it in the super class?  *)
   method! chebyshev_distance_to (end_coord : coordinate) : int = 
     let start_x, start_y = coord_to_int super#get_pos in 
     let end_x, end_y = coord_to_int end_coord in 
