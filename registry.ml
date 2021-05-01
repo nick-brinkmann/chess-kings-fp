@@ -61,6 +61,10 @@ module type REGISTRY =
     (* get_pieces () -- Returns a list of all of the curently 
         registered pieces. *)
     val get_pieces : unit -> piece_type list
+
+    (* When called, checks whose move is next by checking total
+          moves made *)
+    val turn : unit -> bool
     
     val move_piece : coordinate -> coordinate -> unit
 
@@ -127,6 +131,18 @@ module Registry : REGISTRY =
       Printf.printf "-------------------------\n"
     ;;
 
+    let total_moves = ref 0 ;;
+
+    let turn () = 
+      (* If there has been an even number of moves played,
+            it is white's turn *)
+      if !total_moves mod 2 = 0 then
+        true
+      (* Otherwise, it is black's turn *)
+      else 
+        false
+
+
     (* position -- A "map" of all the pieces, organized by
        2-D location *)
     let position : (piece_type option) array array =
@@ -179,8 +195,7 @@ module Registry : REGISTRY =
         (color_to_string obj#get_color)
         (obj#name)
         (coord_to_string obj#get_pos);
-        Some obj
-      
+        Some obj      
     ;;
 
     (* let find_piece (c : coordinate) : piece_type option =
@@ -192,7 +207,8 @@ module Registry : REGISTRY =
       let (end_f, end_r) = coord_to_int destination in
       let piece = position.(start_f).(start_r) in
       position.(start_f).(start_r) <- None;
-      position.(end_f).(end_r) <- piece ;;
+      position.(end_f).(end_r) <- piece;
+      total_moves := !total_moves + 1 ;;
 
     let subset (color : bool) : piece_type list = 
       let s  = Registrants.filter (fun obj -> obj#get_color = color) !registrants in

@@ -75,14 +75,16 @@ let get_coords (x : int) (y : int) : coordinate =
 ;;
 
 
-let move_piece (piece : T.piece_type) = 
+let rec move_piece (piece : T.piece_type) = 
   let s = G.wait_next_event [G.Button_down] in
   let x = s.mouse_x in
   let y = s.mouse_y in
   let (f, r) = get_coords x y in
   if not (piece#can_be_valid_move (f, r)) then
-    (G.set_color G.red;
-    G.draw_string "Cannot move here";)
+    (G.moveto x y;
+    G.set_color G.red;
+    G.draw_string "Cannot move here";
+    move_piece piece)
   else
     (piece#make_move (f, r);
     G.clear_graph ();
@@ -103,8 +105,13 @@ let rec pick_piece () =
             G.set_color G.red;
             G.draw_string "No piece here";
             pick_piece ())
-  | Some piece -> (highlight_square piece#get_pos;
-                  move_piece piece)
+  | Some piece -> if R.turn () = piece#get_color then
+                      (highlight_square piece#get_pos;
+                      move_piece piece)
+                  else
+                    (G.set_color G.red;
+                    G.draw_string "Not your piece";
+                    pick_piece ())
 ;;
 
 
