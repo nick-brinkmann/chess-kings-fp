@@ -9,6 +9,8 @@ module T = Registry ;;
 module R = T.Registry ;;
 
 
+
+
 class piece (initfile : file) (initrank : rank) (p : bool) = 
   object (self)
     (* player to which the piece belongs *) 
@@ -32,7 +34,7 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
     method get_pos : coordinate = 
       f, r
 
-    (* update_pos -- updates the coordinate of a piece *)
+    (* make_move -- updates the coordinate of a piece *)
     method make_move ((new_f, new_r) as coord : coordinate) : unit = 
       (* if opponent piece at new coordinate, deregister that piece *)
       let delete_opp_piece () =
@@ -107,10 +109,20 @@ object (self)
       (not (R.is_piece_along_line_from coord super#get_pos)) &&
       (not (R.contains_any_piece coord))
 
+  (* ensuring promotion works. Currently have auto-queening *)
+  method! make_move ((new_f, new_r) as coord : coordinate) : unit = 
+    super#make_move coord;
+    let new_rank_int = rank_to_int new_r in 
+    (* queening *)
+    if new_rank_int = 7 - (if super#get_color then 0 else 1) * 7 then
+      begin
+        R.deregister (self :> T.piece_type);
+        R.register ((new queen new_f new_r self#get_color) :> T.piece_type);
+      end
 
-   method! draw : unit = 
-      super#draw;
-      G.draw_string "Pawn"
+  method! draw : unit = 
+    super#draw;
+    G.draw_string "Pawn"
    (* method make_move ((new_f, new_r) : coordinate) =  *)
       
 end 
@@ -251,6 +263,13 @@ object(self)
       List.filter (fun obj -> not obj#is_king) opponent_pieces in 
     let is_not_attacked (coord : coordinate) (pieces : T.piece_type list) : bool = 
       List.for_all (fun obj -> not (obj#can_be_valid_move coord)) pieces in
+    (* Castling related logic, used below *)
+    let new_f, new_r = coord_to_int coord in
+    let is_kingside_castling : bool = 
+      (new_f = 6) && (new_r = 7 - (if super#get_color then 7 else 0)) in 
+    let is_queenside_castling : bool = 
+      (new_f = 2) && (new_r = 7 - (if super#get_color then 7 else 0)) in 
+    
     (*
     - no pieces attacking ending square
     - Chebyshev distance = 1
@@ -258,8 +277,20 @@ object(self)
     (is_not_attacked coord opp_pieces_not_king) && 
     ((self#chebyshev_distance_to coord) = 1) &&
     ((opp_king#chebyshev_distance_to coord) > 1) &&
-    (not (R.contains_own_piece super#get_color coord))
-    (* NEED TO STILL ACCOUNT FOR CASTLING*)
+    (not (R.contains_own_piece super#get_color coord)) (*||*)
+    (* OR castling
+    - king moving to g1 or c1 (or g8/c8)
+    - no enemy pieces attacking ending square, starting square (no castling out
+      of check), or intervening square
+    - no pieces on intervening square/ending square
+    - if queenside castling, no piece on b1/b8
+    - neither king nor rook has moved yet  *)
+    (* castling logic for both kingside and queenside *)
+    (* (is_not_attacked coord opp_pieces_not_king) &&
+    ((self#chebyshev_distance_to coord) = 2) &&
+    ((opp_king#chebyshev_distance_to coord) > 1) *)
+
+
 
 
   method! draw : unit = 
