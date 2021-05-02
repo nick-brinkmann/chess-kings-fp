@@ -33,6 +33,8 @@ class type piece_type =
 
     method get_color : bool
 
+    method get_moves : int
+
     method can_be_valid_move : coordinate -> bool
 
     method chebyshev_distance_to : coordinate -> int
