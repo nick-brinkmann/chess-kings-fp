@@ -75,44 +75,17 @@ let get_coords (x : int) (y : int) : coordinate =
 ;;
 
 
-let rec move_piece (piece : T.piece_type) = 
-  let s = G.wait_next_event [G.Button_down] in
-  let x = s.mouse_x in
-  let y = s.mouse_y in
-  (* Converts x y coordinates in graphics windows to
-      chess coordinates *)
-  let (f, r) = get_coords x y in
-  (* If piece is allowed to move to this square executes
-      move; otherwise alerts user of invalid move *)
-  if not (piece#can_be_valid_move (f, r)) then
-    (G.moveto x y;
-    G.set_color G.red;
-    G.draw_string "Cannot move here";
-    move_piece piece)
-  else
-    (let prev = piece#get_pos in
-    piece#make_move (f, r);
-    if R.player_not_in_check piece#get_color then
-      (G.clear_graph ();
-      draw_board R.get_position)
-    else
-      (piece#make_move (prev);
-      G.draw_string "Invalid move";
-      move_piece piece))
-    ;;
 
-
-let rec pick_piece () = 
+(* let rec pick_piece () = 
   let s = G.wait_next_event [G.Button_down] in
   let x = s.mouse_x in
   let y = s.mouse_y in
   let (f, r) = get_coords x y in
-  G.set_color G.magenta;
+  G.set_color G.red;
   G.moveto x y;
   let p = R.find_piece (f, r) in
   match p with
   | None -> (G.moveto x y;
-            G.set_color G.red;
             G.draw_string "No piece here";
             pick_piece ())
   | Some piece -> 
@@ -120,20 +93,76 @@ let rec pick_piece () =
               (highlight_square piece#get_pos;
               move_piece piece)
             else
-              (G.set_color G.red;
-              G.draw_string "Not your piece";
+              (G.draw_string "Not your piece";
               pick_piece ())
-;;
+;; *)
 
+(* take_turn : 
+        - wait for clicks
+        - if clicked on piece update "selected" var
+        - if selected != None check for valid moves *)
 
-let print_board (pos : (T.piece_type option) array array) : unit =
+let take_turn () =
+  let moved = ref false in
+
+  let move_piece (piece : T.piece_type) (f, r : coordinate) = 
+    (* If piece is allowed to move to this square executes
+        move; otherwise alerts user of invalid move *)
+    if not (piece#can_be_valid_move (f, r)) then
+      (let x, y = coord_to_int (f, r) in
+      G.moveto ((x * cSQUARE_WIDTH) + (cSQUARE_WIDTH / 2)) ((y * cSQUARE_HEIGHT) + (cSQUARE_HEIGHT / 2));
+      G.set_color G.red;
+      G.draw_string "Cannot move here")
+    else
+      (let prev = piece#get_pos in
+      piece#make_move (f, r);
+      if R.player_not_in_check piece#get_color then
+        (G.clear_graph ();
+        draw_board R.get_position;
+        moved := true)
+      else
+        (piece#make_move (prev);
+        G.draw_string "Invalid move"))
+  in
+
+  let selected : T.piece_type option ref = ref None in
+  (* Continously poll for clicks until a 
+        piece has been moved *)
+  while not !moved do
+    let s = G.wait_next_event [G.Button_down] in
+    let x, y = s.mouse_x, s.mouse_y in
+    let (f, r)  = get_coords x y in
+    let p = R.find_piece (f, r) in
+    match p with
+    | None -> 
+      begin
+          match !selected with
+          | None -> ()
+          | Some s -> move_piece s (f, r)
+      end
+    | Some piece ->
+      begin
+        if piece#get_color = R.turn () then
+          (selected := Some piece;
+          G.clear_graph();
+          draw_board R.get_position;
+          highlight_square piece#get_pos)
+        else
+          match !selected with
+          | None -> G.moveto x y;
+                    G.draw_string "Not your turn"
+          | Some s -> move_piece s (f, r)
+      end
+  done;;
+
+(* let print_board (pos : (T.piece_type option) array array) : unit =
   Array.iteri (fun _y m -> 
                 Array.iteri (fun _x piece_opt -> 
                       match piece_opt with
                       | None -> Printf.printf "O"
                       | Some _piece -> Printf.printf "X") m;
                 Printf.printf "\n") pos 
-;;
+;; *)
 
 (* Renders the game, waits for next move *)
 let render board = 
@@ -147,7 +176,7 @@ let render board =
                     that move can be made and then 
                     modify piece value or not *)
 
-  pick_piece ();
+  take_turn ();
 
   G.synchronize () 
 ;;

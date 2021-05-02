@@ -111,6 +111,9 @@ module Registry : REGISTRY =
 
     let registrants = ref Registrants.empty ;;
 
+    
+
+
     let print_registry () : unit = 
       let color_to_string (b : bool) : string = 
         if b then "white" else "black" in

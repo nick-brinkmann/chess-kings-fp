@@ -8,6 +8,7 @@ module G = Graphics ;;
 module T = Registry ;;
 module R = T.Registry ;;
 
+
 class piece (initfile : file) (initrank : rank) (p : bool) = 
   object (self)
     (* player to which the piece belongs *) 
@@ -239,8 +240,6 @@ object(self)
 
   method! is_king = true
 
-    (* TODO: King can currently move onto a square that contains its own piece *)
-
   method! can_be_valid_move (coord : coordinate) : bool = 
     (* Checks that no opponent pieces attack the square the king moves to *)
     let opponent_pieces = R.subset (not (super#get_color)) in 
@@ -252,10 +251,14 @@ object(self)
       List.filter (fun obj -> not obj#is_king) opponent_pieces in 
     let is_not_attacked (coord : coordinate) (pieces : T.piece_type list) : bool = 
       List.for_all (fun obj -> not (obj#can_be_valid_move coord)) pieces in
-    (* no pieces attacking ending square and Chebyshev distance = 1 *)
+    (*
+    - no pieces attacking ending square
+    - Chebyshev distance = 1
+    - No friendly piece at square *)
     (is_not_attacked coord opp_pieces_not_king) && 
     ((self#chebyshev_distance_to coord) = 1) &&
-    ((opp_king#chebyshev_distance_to coord) > 1)
+    ((opp_king#chebyshev_distance_to coord) > 1) &&
+    (not (R.contains_own_piece super#get_color coord))
     (* NEED TO STILL ACCOUNT FOR CASTLING*)
 
 

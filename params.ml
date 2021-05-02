@@ -13,6 +13,6 @@ let cLINEWIDTH = 3 ;;
 let cWHITECOLOR = G.white ;;
 let cBLACKCOLOR = G.black ;;
 
-let cWHITE_PIECE_COLOR = G.red ;;
-let cBLACK_PIECE_COLOR = G.blue ;;
+let cWHITE_PIECE_COLOR = G.cyan ;;
+let cBLACK_PIECE_COLOR = G.green ;;
 let cSELECTED_COLOR = G.magenta ;;
