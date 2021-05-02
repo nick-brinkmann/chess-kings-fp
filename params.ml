@@ -10,9 +10,9 @@ let cSQUARE_HEIGHT = (cY_DIMENSION * cPIXELS_PER_BLOCK) / 8 ;;
 
 let cLINEWIDTH = 3 ;;
 
-let cWHITECOLOR = G.white ;;
-let cBLACKCOLOR = G.black ;;
+let cWHITECOLOR = G.rgb 245 229 213 ;;
+let cBLACKCOLOR = G.rgb 237 169 104 ;;
 
-let cWHITE_PIECE_COLOR = G.cyan ;;
-let cBLACK_PIECE_COLOR = G.green ;;
+let cWHITE_PIECE_COLOR = G.white ;;
+let cBLACK_PIECE_COLOR = G.black ;;
 let cSELECTED_COLOR = G.magenta ;;
