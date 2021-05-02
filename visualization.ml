@@ -85,10 +85,10 @@ let take_turn () =
   let move_piece (piece : T.piece_type) (f, r : coordinate) = 
     (* If piece is allowed to move to this square executes
         move; otherwise alerts user of invalid move *)
+    let x, y = coord_to_int (f, r) in
+    G.moveto ((x * cSQUARE_WIDTH) + (cSQUARE_WIDTH / 2)) ((y * cSQUARE_HEIGHT) + (cSQUARE_HEIGHT / 2));
     if not (piece#can_be_valid_move (f, r)) then
-      (let x, y = coord_to_int (f, r) in
-      G.moveto ((x * cSQUARE_WIDTH) + (cSQUARE_WIDTH / 2)) ((y * cSQUARE_HEIGHT) + (cSQUARE_HEIGHT / 2));
-      G.set_color G.red;
+      (G.set_color G.red;
       G.draw_string "Cannot move here")
     else
       (let prev = piece#get_pos in
@@ -108,9 +108,9 @@ let take_turn () =
   let draw_coords (coord : coordinate) : unit =
     G.clear_graph ();
     draw_board R.get_position;
-    match !selected with
+    (match !selected with
     | None -> ()
-    | Some piece -> highlight_square piece#get_pos;
+    | Some piece -> highlight_square piece#get_pos);
 
     let (int_f, int_r) = coord_to_int coord in
     G.moveto ((int_f * cSQUARE_WIDTH) + (cSQUARE_WIDTH / 2)) ((int_r * cSQUARE_HEIGHT) + (cSQUARE_HEIGHT / 2));

@@ -46,34 +46,21 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
       | Some piece -> if piece#get_color <> self#get_color then 
         R.deregister piece
       in
-      (* (if R.contains_enemy_piece self#get_color coord then 
-          let Some opp_piece = R.find_piece coord in 
-          R.deregister opp_piece); *)
       delete_opp_piece ();
       R.move_piece self#get_pos coord;
       f <- new_f;
       r <- new_r;
-      (* Printf.printf "%s \n" (coord_to_string coord); *)
       moves <- moves + 1;
-      (* match R.find_piece self#get_pos with
-      | None -> Printf.printf "she gone \n"
-      | Some piece -> 
-        Printf.printf "She right heeya: %s \n" (coord_to_string self#get_pos) *)
 
     method can_be_valid_move (_c : coordinate) : bool = 
-      (* let old = self#get_pos in 
-      self#make_move c;
-      let is_valid = not (R.is_player_in_check self#get_color) in 
-      self#make_move old;
-      is_valid *)
       true
 
     method chebyshev_distance_to (_c : coordinate) : int = ~-1
 
-    (* draw ?color -- draws a piece, with an optional new color *)
+    (* draw -- does all logic of setting correct color and moving to correct location
+                for drawing a piece. Then, in subclass, we call this method and then
+                use draw_string to actually draw the piece type *)
     method draw : unit = 
-      (* if player then G.set_color cWHITE_PIECE_COLOR 
-      else G.set_color cBLACK_PIECE_COLOR; *)
       G.set_color color;
       let (f, r) = self#get_pos in
       let x = cSQUARE_WIDTH * (file_to_int f) + (cSQUARE_WIDTH / 2) in
@@ -126,7 +113,6 @@ object (self)
   method! draw : unit = 
     super#draw;
     G.draw_string "Pawn"
-   (* method make_move ((new_f, new_r) : coordinate) =  *)
       
 end 
 
@@ -152,9 +138,6 @@ object(self)
     (not (R.is_piece_along_line_from coord super#get_pos)) && 
     (not (R.contains_own_piece super#get_color coord))
 
-
-  (* method can_be_valid_move (end_file, end_rank : coordinate) : bool = 
-    let (curr_file, curr_rank) = super#get_pos in  *)
    method! draw : unit = 
       super#draw;
       G.draw_string "Rook"
@@ -178,7 +161,6 @@ object(self)
     (abs (curr_file - end_file)) + (abs (curr_rank - end_rank)) = 3 &&
     (* ensures no friendly piece at ending square *)
     (not (R.contains_own_piece super#get_color coord))
-
 
 
   method! draw : unit = 
@@ -210,6 +192,7 @@ object(self)
     (* no friendly piece at ending square *)
     (not (R.contains_own_piece super#get_color coord))
 
+
   method! draw : unit = 
    super#draw;
     G.draw_string "Bishop"
@@ -239,9 +222,9 @@ end
 
 and (* class *) king (initfile : file) (initrank : rank) (player : bool) =
 object(self)
-  inherit piece initfile 
+  inherit piece initfile
   initrank
-  player 
+  player
   as super
 
   method! name : string = "king"

@@ -113,8 +113,6 @@ module Registry : REGISTRY =
 
     let registrants = ref Registrants.empty ;;
 
-    
-
 
     let print_registry () : unit = 
       let color_to_string (b : bool) : string = 
@@ -138,15 +136,15 @@ module Registry : REGISTRY =
 
     let total_moves = ref 0 ;;
 
+    (* turn () : checks the number of moves that have been made thus far. If
+                even then it's white's turn, otherwise it's black's turn *)
     let turn () = 
-      (* If there has been an even number of moves played,
-            it is white's turn *)
       if !total_moves mod 2 = 0 then
         true
-      (* Otherwise, it is black's turn *)
       else 
         false
 
+    let prev_positions = ref [] ;;
 
     (* position -- A "map" of all the pieces, organized by
        2-D location *)
@@ -211,9 +209,20 @@ module Registry : REGISTRY =
       let (start_f, start_r) = coord_to_int start in
       let (end_f, end_r) = coord_to_int destination in
       let piece = position.(start_f).(start_r) in
+      prev_positions := position :: !prev_positions;
       position.(start_f).(start_r) <- None;
       position.(end_f).(end_r) <- piece;
       total_moves := !total_moves + 1 ;;
+
+    let take_back () = 
+      let prev_position = List.hd !prev_positions in
+      Array.iteri (fun y m -> 
+        Array.iteri (fun x piece_opt ->
+                      position.(x).(y) <- piece_opt;
+                      match piece_opt with
+                      | Some piece -> register piece
+                      | None -> ()
+                    ) m) prev_position ;;
 
     let subset (color : bool) : piece_type list = 
       let s  = Registrants.filter (fun obj -> obj#get_color = color) !registrants in
