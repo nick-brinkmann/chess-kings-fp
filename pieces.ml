@@ -154,11 +154,13 @@ object(self)
   method! name : string = "knight"
 
   method! can_be_valid_move (coord : coordinate) : bool =
-    if not (super#can_be_valid_move coord) then false else 
     let curr_file, curr_rank = coord_to_int super#get_pos in 
     let end_file, end_rank = coord_to_int coord in
     (* ensures sum of absolute value of changes to rank and file is 3 *)
     (abs (curr_file - end_file)) + (abs (curr_rank - end_rank)) = 3 &&
+    (* and that you're moving both horizontally and vertically, not just in 
+       a straight line *)
+    (abs (curr_file - end_file)) <> 0 && (abs (curr_rank - end_rank)) <> 0 &&
     (* ensures no friendly piece at ending square *)
     (not (R.contains_own_piece super#get_color coord))
 
