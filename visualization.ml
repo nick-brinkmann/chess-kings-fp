@@ -59,7 +59,7 @@ let draw_board (board : (T.piece_type option) array array) : unit =
 let highlight_square (c : coordinate) : unit =
   let (x, y) = coord_to_int c in
   let (corner_x, corner_y) = (cSQUARE_WIDTH * x, cSQUARE_HEIGHT * y) in
-  G.set_color G.magenta;
+  G.set_color cSELECTED_COLOR;
   G.draw_rect corner_x corner_y cSQUARE_WIDTH cSQUARE_HEIGHT
 ;;
 
@@ -75,32 +75,9 @@ let get_coords (x : int) (y : int) : coordinate =
 ;;
 
 
-
-(* let rec pick_piece () = 
-  let s = G.wait_next_event [G.Button_down] in
-  let x = s.mouse_x in
-  let y = s.mouse_y in
-  let (f, r) = get_coords x y in
-  G.set_color G.red;
-  G.moveto x y;
-  let p = R.find_piece (f, r) in
-  match p with
-  | None -> (G.moveto x y;
-            G.draw_string "No piece here";
-            pick_piece ())
-  | Some piece -> 
-            if R.turn () = piece#get_color then
-              (highlight_square piece#get_pos;
-              move_piece piece)
-            else
-              (G.draw_string "Not your piece";
-              pick_piece ())
-;; *)
-
-(* take_turn : 
-        - wait for clicks
-        - if clicked on piece update "selected" var
-        - if selected != None check for valid moves *)
+(* take_turn : Waits for the execution of a move which involves:
+        - selecting one of your own pieces (can change as many times as you want)
+        - selecting a valid square to which you move selected piece *)
 
 let take_turn () =
   let moved = ref false in
@@ -122,37 +99,57 @@ let take_turn () =
         moved := true)
       else
         (piece#make_move (prev);
+        G.set_color G.magenta;
         G.draw_string "Invalid move"))
   in
-
+  
   let selected : T.piece_type option ref = ref None in
+
+  let draw_coords (coord : coordinate) : unit =
+    G.clear_graph ();
+    draw_board R.get_position;
+    match !selected with
+    | None -> ()
+    | Some piece -> highlight_square piece#get_pos;
+
+    let (int_f, int_r) = coord_to_int coord in
+    G.moveto ((int_f * cSQUARE_WIDTH) + (cSQUARE_WIDTH / 2)) ((int_r * cSQUARE_HEIGHT) + (cSQUARE_HEIGHT / 2));
+    G.set_color cHOVER_COLOR;
+    G.draw_string (coord_to_string coord)
+  in
+
   (* Continously poll for clicks until a 
         piece has been moved *)
   while not !moved do
-    let s = G.wait_next_event [G.Button_down] in
+    (* let x, y = G.mouse_pos () in
+    let (f, r) = get_coords x y in *)
+    let s = G.wait_next_event [G.Button_down; G.Mouse_motion] in
     let x, y = s.mouse_x, s.mouse_y in
     let (f, r)  = get_coords x y in
-    let p = R.find_piece (f, r) in
-    match p with
-    | None -> 
-      begin
-          match !selected with
-          | None -> ()
-          | Some s -> move_piece s (f, r)
-      end
-    | Some piece ->
-      begin
-        if piece#get_color = R.turn () then
-          (selected := Some piece;
-          G.clear_graph();
-          draw_board R.get_position;
-          highlight_square piece#get_pos)
-        else
-          match !selected with
-          | None -> G.moveto x y;
-                    G.draw_string "Not your turn"
-          | Some s -> move_piece s (f, r)
-      end
+    draw_coords (f, r);
+    if G.button_down () then 
+      (let p = R.find_piece (f, r) in
+      match p with
+      | None -> 
+        begin
+            match !selected with
+            | None -> ()
+            | Some s -> move_piece s (f, r)
+        end
+      | Some piece ->
+        begin
+          if piece#get_color = R.turn () then
+            (selected := Some piece;
+            G.clear_graph();
+            draw_board R.get_position;
+            highlight_square piece#get_pos)
+          else
+            match !selected with
+            | None -> G.moveto x y;
+                      G.set_color G.red;
+                      G.draw_string "Not your turn"
+            | Some s -> move_piece s (f, r)
+        end)
   done;;
 
 (* let print_board (pos : (T.piece_type option) array array) : unit =
