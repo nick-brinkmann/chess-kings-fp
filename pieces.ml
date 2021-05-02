@@ -34,6 +34,9 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
     method get_pos : coordinate = 
       f, r
 
+    (* get_moves -- returns number of moves a piece has taken *)
+    method get_moves : int = moves
+
     (* make_move -- updates the coordinate of a piece *)
     method make_move ((new_f, new_r) as coord : coordinate) : unit = 
       (* if opponent piece at new coordinate, deregister that piece *)
@@ -265,19 +268,45 @@ object(self)
       List.for_all (fun obj -> not (obj#can_be_valid_move coord)) pieces in
     (* Castling related logic, used below *)
     let new_f, new_r = coord_to_int coord in
+    let starting_rank : rank = if super#get_color then R1 else R8 in
     let is_kingside_castling : bool = 
-      (new_f = 6) && (new_r = 7 - (if super#get_color then 7 else 0)) in 
+      let h_rook_not_moved : bool =
+        match R.find_piece (H, starting_rank) with 
+        | None -> false 
+        | Some piece -> 
+          (piece#name = "rook") && (piece#get_moves = 0)
+      in
+      (new_f = 6) && (new_r = 7 - (if super#get_color then 7 else 0)) &&
+      (super#get_moves = 0) && (h_rook_not_moved) && 
+      (is_not_attacked (F, starting_rank) opp_pieces_not_king) &&
+      (not (R.contains_any_piece (F, starting_rank))) && 
+      (not (R.contains_any_piece (G, starting_rank)))
+    in 
     let is_queenside_castling : bool = 
-      (new_f = 2) && (new_r = 7 - (if super#get_color then 7 else 0)) in 
+      let a_rook_not_moved : bool = 
+        match R.find_piece (A, starting_rank) with 
+        | None -> false 
+        | Some piece -> 
+          (piece#name = "rook") && (piece#get_moves = 0)
+      in
+      (new_f = 2) && (new_r = 7 - (if super#get_color then 7 else 0)) &&
+      (super#get_moves = 0) && (a_rook_not_moved) && 
+      (is_not_attacked (D, starting_rank) opp_pieces_not_king) &&
+      (not (R.contains_any_piece (D, starting_rank))) &&
+      (not (R.contains_any_piece (C, starting_rank))) &&
+      (not (R.contains_any_piece (B, starting_rank)))
+    in 
     
     (*
     - no pieces attacking ending square
     - Chebyshev distance = 1
     - No friendly piece at square *)
-    (is_not_attacked coord opp_pieces_not_king) && 
+    (is_not_attacked coord opp_pieces_not_king) &&
+    ((opp_king#chebyshev_distance_to coord) > 1) && 
+    (* above always holds. Now disjoint cases for castling and other *)
+    (
     ((self#chebyshev_distance_to coord) = 1) &&
-    ((opp_king#chebyshev_distance_to coord) > 1) &&
-    (not (R.contains_own_piece super#get_color coord)) (*||*)
+    (not (R.contains_own_piece super#get_color coord)) ||
     (* OR castling
     - king moving to g1 or c1 (or g8/c8)
     - no enemy pieces attacking ending square, starting square (no castling out
@@ -286,9 +315,13 @@ object(self)
     - if queenside castling, no piece on b1/b8
     - neither king nor rook has moved yet  *)
     (* castling logic for both kingside and queenside *)
-    (* (is_not_attacked coord opp_pieces_not_king) &&
+    (is_not_attacked coord opp_pieces_not_king) &&
     ((self#chebyshev_distance_to coord) = 2) &&
-    ((opp_king#chebyshev_distance_to coord) > 1) *)
+    ((opp_king#chebyshev_distance_to coord) > 1) &&
+    (
+      is_kingside_castling || is_queenside_castling
+    )
+    )
 
 
 
