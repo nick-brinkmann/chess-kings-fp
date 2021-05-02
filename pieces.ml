@@ -323,7 +323,28 @@ object(self)
     )
     )
 
-
+  method! make_move (new_f, _new_r as coord : coordinate) : unit =
+    (* the move is castling *)
+    if (self#chebyshev_distance_to coord = 2) && (self#can_be_valid_move coord) then
+      begin
+        let starting_rank = if super#get_color then R1 else R8 in
+        (* kingside *)
+        if new_f = C then
+          begin 
+            match R.find_piece (A, starting_rank) with 
+            | None -> raise (Invalid_argument "castling error")
+            | Some piece -> piece#make_move (D, starting_rank)
+          end
+        else if new_f = G then 
+          begin
+            match R.find_piece (H, starting_rank) with 
+            | None -> raise (Invalid_argument "castling error")
+            | Some piece -> piece#make_move (F, starting_rank)
+          end
+        else raise (Invalid_argument "castling error")
+      end
+    ;
+    super#make_move coord
 
 
   method! draw : unit = 
