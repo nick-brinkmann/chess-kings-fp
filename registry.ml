@@ -67,6 +67,9 @@ module type REGISTRY =
     (* When called, checks whose move is next by checking total
           moves made *)
     val turn : unit -> bool
+
+    (* Copies the current registry to allow takeback of moves *)
+    val copy_pieces : unit -> piece_type list
     
     val move_piece : coordinate -> coordinate -> unit
 
@@ -219,32 +222,43 @@ module Registry : REGISTRY =
       Printf.printf "==================== \n"
     ;;
 
-    let copy_board (pos : (piece_type option) array array) : 
-                   (piece_type option) array array =
+    (* let copy_board (pos : (piece_type option) array array) : 
+                   (piece_type option) array array = *)
       (* TODO: attempt at making a copy of array, with copies of objects. This way
                 we could store previous states of the game (probably as a stack) and
                 allow for taking back moves *)
+
+    let copy_pieces () : piece_type list = 
+      List.map (Oo.copy) (get_pieces ());;
 
     let move_piece (start : coordinate) (destination : coordinate) : unit =
       let (start_f, start_r) = coord_to_int start in
       let (end_f, end_r) = coord_to_int destination in
       let piece = position.(start_f).(start_r) in
-      prev_positions := (Array.copy position) :: !prev_positions;
+      (* prev_positions := (Array.copy position) :: !prev_positions; *)
+      prev_positions := (copy_pieces ()) :: !prev_positions;
       position.(start_f).(start_r) <- None;
       position.(end_f).(end_r) <- piece;
       total_moves := !total_moves + 1 ;;
       
     let take_back () = 
       let prev_position = List.hd (List.tl !prev_positions) in
-      List.iter print_board !prev_positions;
+      (* List.iter print_board !prev_positions; *)
       (* print_board prev_position; *)
-      Array.iteri (fun y m -> 
+      (* Array.iteri (fun y m -> 
         Array.iteri (fun x piece_opt ->
                       position.(x).(y) <- piece_opt;
                       match piece_opt with
                       | Some piece -> register piece
                       | None -> ()
-                    ) m) prev_position ;;
+                    ) m) prev_position ;; *)
+      registrants := Registrants.empty;
+      let rec update_position (lst : piece_type list) : unit = 
+        match lst with 
+        | [] -> ()
+        | hd :: tl -> register hd; update_position tl 
+      in 
+      update_position prev_position ;;
 
     let subset (color : bool) : piece_type list = 
       let s  = Registrants.filter (fun obj -> obj#get_color = color) !registrants in
