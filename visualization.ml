@@ -36,9 +36,8 @@ let initialize () =
 (* Drawing simple shapes*)
 let draw_square (c : G.color) (y : int) (x : int) (w : int) (h : int) : unit =
   G.set_color c;
-  G.fill_rect (x * w) ((cY_BOARDSIZE * cPIXELS_PER_BLOCK) - h - y * h) w h ;;
-
-
+  G.fill_rect (x * w)  (y * h) w h ;;
+(* ((cY_BOARDSIZE * cPIXELS_PER_BLOCK) - h - y * h) *)
 (* Given the chess coordinates of a specific squares, outlines that square in
 a different color to indicate selection *)
 let highlight_square (c : coordinate) : unit =
@@ -83,19 +82,21 @@ let draw_board () : unit =
     G.draw_string (rank_to_string ra);
   done;
 (* draw take back button *)
-  let x, y = ((cX_BOARDSIZE * cPIXELS_PER_BLOCK) + (cSQUARE_WIDTH*cPIXELS_PER_BLOCK)), ((cY_BOARDSIZE * cPIXELS_PER_BLOCK) / 2) in
-  draw_square G.blue y x cSQUARE_WIDTH cSQUARE_HEIGHT;
-  G.moveto (x + (cSQUARE_WIDTH / 2)) (y + (cSQUARE_HEIGHT / 2));
-  G.set_color G.magenta;
-  G.draw_string "Take back";
+  let x, y = 9, 4 in
+  draw_square cUNDO_BACKGROUND y x cSQUARE_WIDTH cSQUARE_HEIGHT;
+  G.set_color cUNDO_TEXT_COLOR;
+  G.moveto ((x * cSQUARE_WIDTH) + (cSQUARE_WIDTH / 2)) ((y*cSQUARE_HEIGHT) + (cSQUARE_HEIGHT / 2));
+  G.draw_string "Take";
+  G.moveto ((x * cSQUARE_WIDTH) + (cSQUARE_WIDTH / 2)) ((y*cSQUARE_HEIGHT) + (cSQUARE_HEIGHT / 2) - 15);
+  G.draw_string "Back";
   (* draw pieces on board *)
   R.get_pieces ()
   |> List.iter (fun piece -> piece#draw) ;;
 
+
 (* take_turn : Waits for the execution of a move which involves:
         - selecting one of your own pieces (can change as many times as you want)
         - selecting a valid square to which you move selected piece *)
-
 let take_turn () =
   let moved = ref false in
 
@@ -129,7 +130,14 @@ let take_turn () =
     let s = G.wait_next_event [G.Button_down] in
     let x, y = s.mouse_x, s.mouse_y in
     if x > (cX_BOARDSIZE * cPIXELS_PER_BLOCK) || y > (cY_BOARDSIZE * cPIXELS_PER_BLOCK) then
-      ()
+      if (x > 9 * cSQUARE_WIDTH) && 
+         (x < 10 * cSQUARE_WIDTH + cSQUARE_WIDTH) && 
+         (y > 4 * cSQUARE_HEIGHT) && 
+         (y < 5 * cSQUARE_HEIGHT) then
+        (R.take_back ();
+        draw_board ())
+      else
+       ()
     else
       (let (f, r)  = get_coords x y in
         let p = R.find_piece (f, r) in

@@ -213,16 +213,21 @@ module Registry : REGISTRY =
       flip_turn () 
     ;;
 
-    let take_back () = 
-      let prev_position = List.hd !prev_positions in
-      registrants := Registrants.empty;
-      let rec update_position (lst : piece_type list) : unit = 
-        match lst with 
-        | [] -> ()
-        | hd :: tl -> register hd; update_position tl 
-      in 
-      update_position prev_position;
-      whose_turn := not !whose_turn ;;
+    let take_back () =
+      if !prev_positions = [] then
+        ()
+      else
+        (let prev_position = List.hd !prev_positions in
+        registrants := Registrants.empty;
+        let rec update_position (lst : piece_type list) : unit = 
+          match lst with 
+          | [] -> ()
+          | hd :: tl -> register hd; update_position tl 
+        in 
+        update_position prev_position;
+        prev_positions := List.tl !prev_positions;
+        whose_turn := not !whose_turn)
+    ;;
 
     let subset (color : bool) : piece_type list = 
       let s  = Registrants.filter (fun obj -> obj#get_color = color) !registrants in

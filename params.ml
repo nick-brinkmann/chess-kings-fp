@@ -21,3 +21,5 @@ let cWHITE_PIECE_COLOR = G.white ;;
 let cBLACK_PIECE_COLOR = G.black ;;
 let cSELECTED_COLOR = G.red ;;
 let cHOVER_COLOR = G.rgb 214 213 212;;
+let cUNDO_BACKGROUND = G.yellow ;;
+let cUNDO_TEXT_COLOR = G.black ;;
