@@ -186,6 +186,10 @@ let render () =
                     modify piece value or not *)
 
   take_turn ();
+  if R.checkmate_check () then
+    (G.moveto (cX_BOARDSIZE * cPIXELS_PER_BLOCK / 2) (cY_BOARDSIZE * cPIXELS_PER_BLOCK / 2);
+    G.set_color G.red;
+    G.draw_string "Checkmate!");
 
   G.synchronize () 
 ;;

@@ -106,6 +106,10 @@ module type REGISTRY =
 
     (* takes back the last move *)
     val take_back : unit -> unit 
+
+    val check_stalemate : unit -> bool
+
+    val checkmate_check : unit -> bool
   end
 
 let order_pieces (p1 : piece_type) (p2 : piece_type) = 
@@ -309,6 +313,44 @@ module Registry : REGISTRY =
       let my_king_pos = my_king#get_pos in
       (List.for_all (fun obj -> not (obj#can_be_valid_move my_king_pos)) opp_pieces_not_king) &&
       (opp_king#chebyshev_distance_to my_king_pos > 1)
+    ;;
+
+    let valid_moves_exist () : bool =
+      (* List of my pieces *)
+      let my_pieces = ref (subset !whose_turn) in
+      let checking_piece = ref (List.hd !my_pieces) in
+      my_pieces := List.tl !my_pieces;
+      let valid_moves = ref false in
+      while (not !valid_moves) && (!my_pieces <> []) do
+        for i = 0 to 7 do
+          for j = 0 to 7 do
+            let (f, r) = int_to_coord (i, j) in
+              (* Check if piece would be able to move that way *)
+              if !checking_piece#can_be_valid_move (f, r) then
+                (* make provisional move, verify that wouldn't put player in check *)
+                !checking_piece#make_move (f, r);
+                if player_not_in_check !whose_turn then
+                  valid_moves := true;
+                take_back ();
+          done;
+        done;
+        checking_piece := List.hd !my_pieces;
+        my_pieces := List.tl !my_pieces
+      done;
+      !valid_moves;;
+
+    let checkmate_check () : bool = 
+      if not (valid_moves_exist ()) && not (player_not_in_check !whose_turn) then
+        true
+      else
+        false
+    ;;
+
+    let check_stalemate () : bool =
+      if not (valid_moves_exist ()) && player_not_in_check !whose_turn then
+        true
+      else
+        false
     ;;
     
   end
