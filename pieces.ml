@@ -8,7 +8,15 @@ module G = Graphics ;;
 module T = Registry ;;
 module R = T.Registry ;;
 
+(* Global variable for whether en-passant is possible. *)
+type en_passant = 
+  {possible : bool;
+   square : coordinate option
+  };;
 
+let e_p : en_passant = 
+  {possible = false;
+   square = None};;
 
 
 class piece (initfile : file) (initrank : rank) (p : bool) = 
@@ -46,8 +54,8 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
       | Some piece -> if piece#get_color <> self#get_color then 
         R.deregister piece
       in
-      delete_opp_piece ();
       R.move_piece self#get_pos coord;
+      delete_opp_piece ();
       f <- new_f;
       r <- new_r;
       moves <- moves + 1;
@@ -99,11 +107,15 @@ object (self)
       (not (R.is_piece_along_line_from coord super#get_pos)) &&
       (not (R.contains_any_piece coord))
 
-  (* ensuring promotion works. Currently have auto-queening *)
+  (* promotion, en passant *)
   method! make_move ((new_f, new_r) as coord : coordinate) : unit = 
+    (* en passant. *)
+    (* let is_at_starting_square : bool = 
+      (snd super#get_pos) = (if super#get_color then R2 else R7) in *)
+    
     super#make_move coord;
     let new_rank_int = rank_to_int new_r in 
-    (* queening *)
+    (* promotion. currently auto-queen. *)
     if new_rank_int = 7 - (if super#get_color then 0 else 1) * 7 then
       begin
         R.deregister (self :> T.piece_type);

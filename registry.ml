@@ -140,15 +140,13 @@ module Registry : REGISTRY =
       Printf.printf "-------------------------\n"
     ;;
 
-    let total_moves = ref 0 ;;
+    (* let total_moves = ref 0 ;; *)
+    let total_moves = ref true ;;
 
     (* turn () : checks the number of moves that have been made thus far. If
                 even then it's white's turn, otherwise it's black's turn *)
-    let turn () = 
-      if !total_moves mod 2 = 0 then
-        true
-      else 
-        false
+    let turn () =
+      !total_moves;;
 
     let prev_positions = ref [] ;;
 
@@ -239,7 +237,7 @@ module Registry : REGISTRY =
       prev_positions := (copy_pieces ()) :: !prev_positions;
       position.(start_f).(start_r) <- None;
       position.(end_f).(end_r) <- piece;
-      total_moves := !total_moves + 1 ;;
+      total_moves := not !total_moves ;;
       
     let take_back () = 
       (* let prev_position = List.hd (List.tl !prev_positions) in *)
@@ -259,7 +257,8 @@ module Registry : REGISTRY =
         | [] -> ()
         | hd :: tl -> register hd; update_position tl 
       in 
-      update_position prev_position ;;
+      update_position prev_position;
+      total_moves := not !total_moves ;;
 
     let subset (color : bool) : piece_type list = 
       let s  = Registrants.filter (fun obj -> obj#get_color = color) !registrants in

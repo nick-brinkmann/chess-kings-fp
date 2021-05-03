@@ -100,13 +100,15 @@ let take_turn () =
       else
         (R.take_back ();
         (* piece#make_move (prev); *)
+        G.clear_graph ();
+        draw_board R.get_position;
         G.set_color G.magenta;
         G.draw_string "Invalid move"))
   in
   
   let selected : T.piece_type option ref = ref None in
 
-  let draw_coords (coord : coordinate) : unit =
+  (* let draw_coords (coord : coordinate) : unit =
     G.clear_graph ();
     draw_board R.get_position;
     (match !selected with
@@ -116,17 +118,17 @@ let take_turn () =
     G.moveto ((int_f * cSQUARE_WIDTH) + (cSQUARE_WIDTH / 2)) ((int_r * cSQUARE_HEIGHT) + (cSQUARE_HEIGHT / 2));
     G.set_color cHOVER_COLOR;
     G.draw_string (coord_to_string coord);
-  in
+  in *)
 
   (* Continously poll for clicks until a 
         piece has been moved *)
   while not !moved do
-    let s = G.wait_next_event [G.Button_down; G.Mouse_motion] in
+    let s = G.wait_next_event [G.Button_down(* ; G.Mouse_motion *)] in
     let x, y = s.mouse_x, s.mouse_y in
     let (f, r)  = get_coords x y in
-    draw_coords (f, r);
-    if G.button_down () then 
-      (let p = R.find_piece (f, r) in
+    (* draw_coords (f, r); *)
+    (* if G.button_down () then  *)
+      let p = R.find_piece (f, r) in
       match p with
       | None -> 
         begin
@@ -147,7 +149,7 @@ let take_turn () =
                       G.set_color G.red;
                       G.draw_string "Not your turn"
             | Some s -> move_piece s (f, r)
-        end)
+        end
   done;;
 
 let print_board (pos : (T.piece_type option) array array) : unit =
