@@ -242,7 +242,8 @@ module Registry : REGISTRY =
       total_moves := !total_moves + 1 ;;
       
     let take_back () = 
-      let prev_position = List.hd (List.tl !prev_positions) in
+      (* let prev_position = List.hd (List.tl !prev_positions) in *)
+      let prev_position = List.hd !prev_positions in
       (* List.iter print_board !prev_positions; *)
       (* print_board prev_position; *)
       (* Array.iteri (fun y m -> 
@@ -363,3 +364,8 @@ module Registry : REGISTRY =
     ;; *)
     
   end
+
+(* THINGS TO MENTION: 
+- OCaml graphics module double buffering. Could stop flickering.
+- Fix take back. Do we even need the array?
+*)
