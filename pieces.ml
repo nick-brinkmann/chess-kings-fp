@@ -65,7 +65,6 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
           raise (Invalid_argument "make_move: trying to move onto own piece")
          else R.deregister piece)
       in
-      R.take_turn ();
       delete_opp_piece ();
       (* updates last_move record *)
       last_move.player <- self#get_color;
@@ -78,10 +77,10 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
       (coord_to_string last_move.end_square);
       f <- new_f;
       r <- new_r;
-      moves <- moves + 1;
+      moves <- moves + 1
 
     method can_be_valid_move (_c : coordinate) : bool = 
-      true
+      false
 
     method chebyshev_distance_to (_c : coordinate) : int = ~-1
 
@@ -106,8 +105,7 @@ object (self)
 
   method! name : string = "pawn"
 
-  method! can_be_valid_move (end_file, _end_rank as coord: coordinate) : bool =
-    if not (super#can_be_valid_move coord) then false else 
+  method! can_be_valid_move (end_file, _end_rank as coord: coordinate) : bool = 
     let end_fi, end_ra = coord_to_int coord in
     let curr_fi, curr_ra = coord_to_int super#get_pos in 
     let is_at_starting_square = (moves = 0) in 
@@ -176,7 +174,6 @@ object
   method! name : string = "rook"
 
   method! can_be_valid_move (end_file, end_rank as coord : coordinate) : bool =
-    if not (super#can_be_valid_move coord) then false else 
     (* ensures exactly one of rank and file is unchanged *)
     let curr_file, curr_rank = super#get_pos in
     (* exclusive or, then negated. Checks that exactly one of current rank and
@@ -230,7 +227,6 @@ object
   method! name : string = "bishop"
 
   method! can_be_valid_move (coord : coordinate) : bool =
-    if not (super#can_be_valid_move coord) then false else 
     (* convert to integer representation *)
     let curr_file, curr_rank = coord_to_int super#get_pos in 
     let end_file, end_rank = coord_to_int coord in 
@@ -363,7 +359,7 @@ object(self)
     if (self#chebyshev_distance_to coord = 2) && (self#can_be_valid_move coord) then
       begin
         let starting_rank = if super#get_color then R1 else R8 in
-        R.flip_turn ();
+        (* R.flip_turn (); *)
         (* kingside *)
         if new_f = C then
           begin 

@@ -230,7 +230,7 @@ module Registry : REGISTRY =
         in 
         update_position prev_position;
         prev_positions := List.tl !prev_positions;
-        whose_turn := not !whose_turn)
+        flip_turn ())
     ;;
 
     let subset (color : bool) : piece_type list = 
@@ -317,45 +317,47 @@ module Registry : REGISTRY =
 
     let valid_moves_exist () : bool =
       (* List of my pieces *)
-      let my_pieces = ref (subset !whose_turn) in
-      let checking_piece = ref (List.hd !my_pieces) in
-      my_pieces := List.tl !my_pieces;
-      let valid_moves = ref false in
-      while (not !valid_moves) && (!my_pieces <> []) do
-        for i = 0 to 7 do
-          for j = 0 to 7 do
-            let (f, r) = int_to_coord (i, j) in
-              (* Check if piece would be able to move that way *)
-              if !checking_piece#can_be_valid_move (f, r) then
-                (* make provisional move, verify that wouldn't put player in check *)
-                !checking_piece#make_move (f, r);
-                if player_not_in_check !whose_turn then
-                  valid_moves := true;
-                take_back ();
+      let my_pieces = subset !whose_turn in
+      (* valid moves for a single piece *)
+      let single_piece_valid_moves (piece : piece_type) : bool = 
+        let has_valid_move = ref false in
+        let i = ref 0 in
+        let j = ref 0 in
+        (* iterate through all squares on chessboard, if any square is 
+            a valid move break out of loop *)
+        while not !has_valid_move && !i < 8 do
+          while not !has_valid_move && !j <> 8 do
+            let (f, r) = int_to_coord (!i, !j) in
+            (* Check if piece would be able to move that way *)
+            if piece#can_be_valid_move (f, r) then
+              (* make provisional move and verify that wouldn't put player in check *)
+              (take_turn ();
+              piece#make_move (f, r);
+              if player_not_in_check (not !whose_turn) then
+                has_valid_move := true;
+                Printf.printf "valid move exists \n";
+              take_back ());
+            j := !j + 1;
           done;
+          i := !i + 1;
         done;
-        checking_piece := List.hd !my_pieces;
-        my_pieces := List.tl !my_pieces
-      done;
-      !valid_moves;;
+        if not !has_valid_move then Printf.printf "no valid move found \n";
+        !has_valid_move
+      in
+      let rec exist_val_moves (lst : piece_type list) : bool =
+        match lst with 
+        | [] -> false
+        | hd :: tl -> (single_piece_valid_moves hd) || (exist_val_moves tl)
+      in
+      exist_val_moves my_pieces
+    ;;
 
     let checkmate_check () : bool = 
-      if not (valid_moves_exist ()) && not (player_not_in_check !whose_turn) then
-        true
-      else
-        false
+      (not (valid_moves_exist ())) && (not (player_not_in_check !whose_turn)) 
     ;;
 
     let check_stalemate () : bool =
-      if not (valid_moves_exist ()) && player_not_in_check !whose_turn then
-        true
-      else
-        false
+      (not (valid_moves_exist ())) && player_not_in_check !whose_turn
     ;;
     
   end
-
-(* THINGS TO MENTION: 
-- OCaml graphics module double buffering. Could stop flickering.
-- Fix take back. Do we even need the array?
-*)
