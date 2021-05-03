@@ -98,6 +98,9 @@ module type REGISTRY =
 
     (* prints the registry *)
     val print_registry : unit -> unit
+
+    (* Changes state of the game one state backwards *)
+    val take_back : unit -> unit 
   end
 
 let order_pieces (p1 : piece_type) (p2 : piece_type) = 
@@ -205,17 +208,36 @@ module Registry : REGISTRY =
       let fi, ra = coord_to_int c in 
       position.(fi).(ra) ;; *)
 
+
+    let print_board (pos : (piece_type option) array array) : unit =
+      Array.iteri (fun _y m -> 
+                    Array.iteri (fun _x piece_opt -> 
+                          match piece_opt with
+                          | None -> Printf.printf "O  |"
+                          | Some _piece -> Printf.printf "X  |") m;
+                    Printf.printf "\n------------------------------\n") pos;
+      Printf.printf "==================== \n"
+    ;;
+
+    let copy_board (pos : (piece_type option) array array) : 
+                   (piece_type option) array array =
+      (* TODO: attempt at making a copy of array, with copies of objects. This way
+                we could store previous states of the game (probably as a stack) and
+                allow for taking back moves *)
+
     let move_piece (start : coordinate) (destination : coordinate) : unit =
       let (start_f, start_r) = coord_to_int start in
       let (end_f, end_r) = coord_to_int destination in
       let piece = position.(start_f).(start_r) in
-      prev_positions := position :: !prev_positions;
+      prev_positions := (Array.copy position) :: !prev_positions;
       position.(start_f).(start_r) <- None;
       position.(end_f).(end_r) <- piece;
       total_moves := !total_moves + 1 ;;
-
+      
     let take_back () = 
-      let prev_position = List.hd !prev_positions in
+      let prev_position = List.hd (List.tl !prev_positions) in
+      List.iter print_board !prev_positions;
+      (* print_board prev_position; *)
       Array.iteri (fun y m -> 
         Array.iteri (fun x piece_opt ->
                       position.(x).(y) <- piece_opt;
@@ -325,9 +347,5 @@ module Registry : REGISTRY =
       Printf.printf "%d \n" num_pieces;
       Printf.printf "-------------------------\n"
     ;; *)
-
-
     
-
-
   end

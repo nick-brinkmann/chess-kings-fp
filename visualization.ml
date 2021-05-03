@@ -98,7 +98,8 @@ let take_turn () =
         draw_board R.get_position;
         moved := true)
       else
-        (piece#make_move (prev);
+        (R.take_back ();
+        (* piece#make_move (prev); *)
         G.set_color G.magenta;
         G.draw_string "Invalid move"))
   in
@@ -111,18 +112,15 @@ let take_turn () =
     (match !selected with
     | None -> ()
     | Some piece -> highlight_square piece#get_pos);
-
     let (int_f, int_r) = coord_to_int coord in
     G.moveto ((int_f * cSQUARE_WIDTH) + (cSQUARE_WIDTH / 2)) ((int_r * cSQUARE_HEIGHT) + (cSQUARE_HEIGHT / 2));
     G.set_color cHOVER_COLOR;
-    G.draw_string (coord_to_string coord)
+    G.draw_string (coord_to_string coord);
   in
 
   (* Continously poll for clicks until a 
         piece has been moved *)
   while not !moved do
-    (* let x, y = G.mouse_pos () in
-    let (f, r) = get_coords x y in *)
     let s = G.wait_next_event [G.Button_down; G.Mouse_motion] in
     let x, y = s.mouse_x, s.mouse_y in
     let (f, r)  = get_coords x y in
@@ -152,14 +150,14 @@ let take_turn () =
         end)
   done;;
 
-(* let print_board (pos : (T.piece_type option) array array) : unit =
+let print_board (pos : (T.piece_type option) array array) : unit =
   Array.iteri (fun _y m -> 
                 Array.iteri (fun _x piece_opt -> 
                       match piece_opt with
                       | None -> Printf.printf "O"
                       | Some _piece -> Printf.printf "X") m;
                 Printf.printf "\n") pos 
-;; *)
+;;
 
 (* Renders the game, waits for next move *)
 let render board = 
