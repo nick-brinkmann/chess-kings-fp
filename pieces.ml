@@ -106,12 +106,10 @@ object (self)
 
   method! name : string = "pawn"
 
-  method! can_be_valid_move (end_file, end_rank as coord: coordinate) : bool =
+  method! can_be_valid_move (end_file, _end_rank as coord: coordinate) : bool =
     if not (super#can_be_valid_move coord) then false else 
-    let end_fi, end_ra = (file_to_int end_file), (rank_to_int end_rank) in
-    let (curr_fi, curr_ra) = (file_to_int (fst super#get_pos)), 
-                             (rank_to_int (snd super#get_pos)) 
-      in 
+    let end_fi, end_ra = coord_to_int coord in
+    let curr_fi, curr_ra = coord_to_int super#get_pos in 
     let is_at_starting_square = (moves = 0) in 
     (* moving directly forward 1 square *)
     if (end_ra - curr_ra = (if player then 1 else ~-1)) &&
@@ -122,17 +120,37 @@ object (self)
        abs (end_fi - curr_fi) = 1 && 
        (R.contains_enemy_piece super#get_color coord) then true 
     (* moving forward two squares *)
-    else is_at_starting_square && end_fi = curr_fi && 
+    else if is_at_starting_square && end_fi = curr_fi && 
       (end_ra - curr_ra = (if player then 2 else ~-2)) &&
       (not (R.is_piece_along_line_from coord super#get_pos)) &&
-      (not (R.contains_any_piece coord))
+      (not (R.contains_any_piece coord)) then true 
+    (* en passant *)
+    else last_move.player <> self#get_color && last_move.piece = "pawn" &&
+    (fst last_move.end_square) = end_file && 
+    (rank_to_int (snd last_move.end_square)) = curr_ra &&
+    abs (end_fi - curr_fi) = 1 &&
+    (snd last_move.start_square) = (if last_move.player then R2 else R7)
 
   (* promotion, en passant *)
   method! make_move ((new_f, new_r) as coord : coordinate) : unit = 
-    (* en passant. *)
-    (* let is_at_starting_square : bool = 
-      (snd super#get_pos) = (if super#get_color then R2 else R7) in *)
-    
+    (* en passant *)
+    let end_fi, end_ra = coord_to_int coord in 
+    let curr_fi, curr_ra = coord_to_int super#get_pos in 
+    if last_move.player <> self#get_color && last_move.piece = "pawn" &&
+      (fst last_move.end_square) = new_f && 
+      (rank_to_int (snd last_move.end_square)) = curr_ra &&
+      abs (end_fi - curr_fi) = 1 &&
+      (snd last_move.start_square) = (if last_move.player then R2 else R7)
+    then
+      begin
+        super#make_move coord;
+        match R.find_piece 
+        (new_f, int_to_rank (end_ra + (if super#get_color then -1 else 1))) with 
+        | None -> raise (Invalid_argument "en passant error")
+        | Some opp_pawn -> R.deregister opp_pawn
+      end
+    else
+    (* not en passant *)
     super#make_move coord;
     let new_rank_int = rank_to_int new_r in 
     (* promotion. currently auto-queen. *)
