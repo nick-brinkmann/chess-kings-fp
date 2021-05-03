@@ -11,10 +11,10 @@ module R = T.Registry ;;
 (* Global variable for whether en-passant is possible. *)
 type move_memory = 
   {
-  player : bool;
-  piece : string;
-  start_square : coordinate;
-  end_square : coordinate
+  mutable player : bool;
+  mutable piece : string;
+  mutable start_square : coordinate;
+  mutable end_square : coordinate
   }
 ;;
 
@@ -68,7 +68,14 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
       R.take_turn ();
       delete_opp_piece ();
       (* updates last_move record *)
-      (* last_move.player <- self#get_color; *)
+      last_move.player <- self#get_color;
+      last_move.piece <- self#name;
+      last_move.start_square <- self#get_pos;
+      last_move.end_square <- coord;
+      (*debugging purposes*)
+      Printf.printf "%s %s -> %s \n" last_move.piece 
+      (coord_to_string last_move.start_square) 
+      (coord_to_string last_move.end_square);
       f <- new_f;
       r <- new_r;
       moves <- moves + 1;
