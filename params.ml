@@ -1,12 +1,16 @@
 (* Declaration of global variable *)
 module G = Graphics ;;
 
-let cX_DIMENSION = 100 ;;
-let cY_DIMENSION = cX_DIMENSION ;;
+let cX_BOARDSIZE = 100 ;;
+let cY_BOARDSIZE = cX_BOARDSIZE ;;
+
+(* Do not fucking change *)
+let cX_DIMENSION = cX_BOARDSIZE + cX_BOARDSIZE / 4 ;;
+let cY_DIMENSION = cY_BOARDSIZE + 3 ;;
 let cPIXELS_PER_BLOCK = 8 ;;
 
-let cSQUARE_WIDTH = (cX_DIMENSION*cPIXELS_PER_BLOCK) / 8 ;;
-let cSQUARE_HEIGHT = (cY_DIMENSION * cPIXELS_PER_BLOCK) / 8 ;;
+let cSQUARE_WIDTH = (cX_BOARDSIZE * cPIXELS_PER_BLOCK) / 8 ;;
+let cSQUARE_HEIGHT = (cY_BOARDSIZE * cPIXELS_PER_BLOCK) / 8 ;;
 
 let cLINEWIDTH = 3 ;;
 

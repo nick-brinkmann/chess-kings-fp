@@ -9,14 +9,23 @@ module T = Registry ;;
 module R = T.Registry ;;
 
 (* Global variable for whether en-passant is possible. *)
-type en_passant = 
-  {possible : bool;
-   square : coordinate option
-  };;
+type move_memory = 
+  {
+  player : bool;
+  piece : string;
+  start_square : coordinate;
+  end_square : coordinate
+  }
+;;
 
-let e_p : en_passant = 
-  {possible = false;
-   square = None};;
+let last_move : move_memory = 
+  {
+  player = false;
+  piece = "";
+  start_square = A,R1;
+  end_square = A,R1
+  }
+;;
 
 
 class piece (initfile : file) (initrank : rank) (p : bool) = 
@@ -50,12 +59,16 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
       (* if opponent piece at new coordinate, deregister that piece *)
       let delete_opp_piece () =
       match R.find_piece coord with 
-      | None -> (* Printf.printf "No enemy piece here \n" *) () 
-      | Some piece -> if piece#get_color <> self#get_color then 
-        R.deregister piece
+      | None -> () 
+      | Some piece -> 
+        (if piece#get_color = self#get_color then 
+          raise (Invalid_argument "make_move: trying to move onto own piece")
+         else R.deregister piece)
       in
-      R.move_piece self#get_pos coord;
+      R.take_turn ();
       delete_opp_piece ();
+      (* updates last_move record *)
+      (* last_move.player <- self#get_color; *)
       f <- new_f;
       r <- new_r;
       moves <- moves + 1;
@@ -71,8 +84,8 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
     method draw : unit = 
       G.set_color color;
       let (f, r) = self#get_pos in
-      let x = cSQUARE_WIDTH * (file_to_int f) + (cSQUARE_WIDTH / 2) in
-      let y = cSQUARE_HEIGHT * (rank_to_int r) + (cSQUARE_HEIGHT / 2) in
+      let x = (cSQUARE_WIDTH * (file_to_int f) + (7 * cSQUARE_WIDTH / 16)) in
+      let y = cSQUARE_HEIGHT * (rank_to_int r) + (7 * cSQUARE_HEIGHT / 16) in
       G.moveto x y
 
   end;;
@@ -129,7 +142,7 @@ object (self)
 end 
 
 and (* class *) rook (initfile : file) (initrank : rank) (player : bool) =
-object(self)
+object
   inherit piece initfile 
                 initrank
                 player 
@@ -157,7 +170,7 @@ object(self)
 end
 
 and (* class *) knight (initfile : file) (initrank : rank) (player : bool) =
-object(self)
+object
   inherit piece initfile 
   initrank
   player 
@@ -183,7 +196,7 @@ object(self)
 end
 
 and (* class *) bishop (initfile : file) (initrank : rank) (player : bool) =
-object(self)
+object
   inherit piece initfile 
   initrank
   player 
@@ -325,6 +338,7 @@ object(self)
     if (self#chebyshev_distance_to coord = 2) && (self#can_be_valid_move coord) then
       begin
         let starting_rank = if super#get_color then R1 else R8 in
+        R.flip_turn ();
         (* kingside *)
         if new_f = C then
           begin 

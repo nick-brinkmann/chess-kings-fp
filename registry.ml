@@ -56,28 +56,30 @@ module type REGISTRY =
        registered. *)
     val deregister : piece_type -> unit
 
-    val size_of_registrants : unit -> int
-
-    val get_position : (piece_type option) array array
-
     (* get_pieces () -- Returns a list of all of the curently 
         registered pieces. *)
     val get_pieces : unit -> piece_type list
 
-    (* When called, checks whose move is next by checking total
-          moves made *)
+    (* When called, checks whose turn it is to play by checking boolean *)
     val turn : unit -> bool
+
+    (* flips whose move it is *)
+    val flip_turn : unit -> unit
 
     (* Copies the current registry to allow takeback of moves *)
     val copy_pieces : unit -> piece_type list
     
-    val move_piece : coordinate -> coordinate -> unit
+    (* Stores copy of previous state of the game into 'prev_positions' 
+        list, and flips boolean to indicate next players turn *)
+    val take_turn : unit -> unit
 
     (* Returns piece_type option:
         - None if there is no piece on corresponding square
         - Some Piece if a piece is found *)
     val find_piece : coordinate -> (piece_type option)
 
+    
+    (* Returns pieces of the given color *)
     val subset : bool -> (piece_type list)
 
     (* contains_enemy_piece your_color coordinate -- returns true if square 
@@ -95,14 +97,14 @@ module type REGISTRY =
       ending squares *)
     val is_piece_along_line_from : coordinate -> coordinate -> bool
 
-    (* is_plyaer_in_check player -- returns true if the player of the given 
+    (* is_player_in_check player -- returns true if the player of the given 
       color is currently in check. *)
     val player_not_in_check : bool -> bool
 
     (* prints the registry *)
     val print_registry : unit -> unit
 
-    (* Changes state of the game one state backwards *)
+    (* takes back the last move *)
     val take_back : unit -> unit 
   end
 
@@ -117,6 +119,7 @@ module Registry : REGISTRY =
                        let compare = order_pieces
                 end) ;;
 
+    (* initialize registry of pieces to empty set *)
     let registrants = ref Registrants.empty ;;
 
 
@@ -140,33 +143,25 @@ module Registry : REGISTRY =
       Printf.printf "-------------------------\n"
     ;;
 
-    (* let total_moves = ref 0 ;; *)
-    let total_moves = ref true ;;
+    (* let whose_turn = ref true ;; *)
+    let whose_turn = ref true ;;
 
     (* turn () : checks the number of moves that have been made thus far. If
                 even then it's white's turn, otherwise it's black's turn *)
     let turn () =
-      !total_moves;;
+      !whose_turn ;;
+
+    let flip_turn () = 
+      whose_turn := not !whose_turn ;;
 
     let prev_positions = ref [] ;;
 
-    (* position -- A "map" of all the pieces, organized by
-       2-D location *)
-    let position : (piece_type option) array array =
-      make_matrix 8 8 None ;;
-
-    let get_position = position ;;
-
-    (* The required REGISTRY functions. See REGISTRY module signature
-       for documentation *)
-      
+    (* register obj : updates the registry by adding a new piece *)
     let register (obj : piece_type) : unit =
-      registrants := (Registrants.add obj !registrants);
-      let f, r = obj#get_pos in
-      let fi = file_to_int f in
-      let ra = rank_to_int r in
-      position.(fi).(ra) <- Some obj ;;
+      registrants := (Registrants.add obj !registrants);;
 
+    (*  deregister obj : updates registry by removing a piece, alerts user if
+                        attempting to remove piece not in registry *)
     let deregister (obj : piece_type) : unit =
       Printf.printf "Deregistering now \n";
       let new_registrants = Registrants.remove obj !registrants in
@@ -177,80 +172,49 @@ module Registry : REGISTRY =
       else
         begin
           registrants := new_registrants;
-          let f, r = obj#get_pos in
-          let fi = file_to_int f in
-          let ra = rank_to_int r in
-          position.(fi).(ra) <- None
         end ;;
       
+
+    (* get_pieces () : Returns a list of the pieces in the registry *)
     let get_pieces () = Registrants.elements !registrants ;;
 
-    let size_of_registrants () : int = 
-      List.length (get_pieces ()) ;;
-  
+
     let find_piece coord : piece_type option = 
-      let color_to_string (b : bool) : string = 
-        if b then "white" else "black" in
+      (* let color_to_string (b : bool) : string = 
+        if b then "white" else "black" in *)
+      (* filter piece registry by pieces on coord *)
       let subset = Registrants.filter (fun obj -> obj#get_pos = coord) !registrants in
+      (* if the subset has more than one piece, then we have broken an invariant *)
       if Registrants.cardinal subset > 1 then 
         raise (Invalid_argument "find_piece: Multiple pieces on the same square")
       else
-      match Registrants.choose_opt subset with 
+        Registrants.choose_opt subset
+      (* match Registrants.choose_opt subset with 
       | None -> None 
       | Some obj -> 
         Printf.printf "%s %s %s \n" 
         (color_to_string obj#get_color)
         (obj#name)
         (coord_to_string obj#get_pos);
-        Some obj      
+        Some obj *)
     ;;
 
-    (* let find_piece (c : coordinate) : piece_type option =
-      let fi, ra = coord_to_int c in 
-      position.(fi).(ra) ;; *)
 
-
-    let print_board (pos : (piece_type option) array array) : unit =
-      Array.iteri (fun _y m -> 
-                    Array.iteri (fun _x piece_opt -> 
-                          match piece_opt with
-                          | None -> Printf.printf "O  |"
-                          | Some _piece -> Printf.printf "X  |") m;
-                    Printf.printf "\n------------------------------\n") pos;
-      Printf.printf "==================== \n"
-    ;;
-
-    (* let copy_board (pos : (piece_type option) array array) : 
-                   (piece_type option) array array = *)
-      (* TODO: attempt at making a copy of array, with copies of objects. This way
-                we could store previous states of the game (probably as a stack) and
-                allow for taking back moves *)
-
+    (* copy_pieces (): helper function that returns a list of pieces as they 
+                       currently are in the registry, essentially taking a copy
+                       of the current state of the game *)
     let copy_pieces () : piece_type list = 
-      List.map (Oo.copy) (get_pieces ());;
+      List.map Oo.copy (get_pieces ())
+    ;;
 
-    let move_piece (start : coordinate) (destination : coordinate) : unit =
-      (* let (start_f, start_r) = coord_to_int start in
-      let (end_f, end_r) = coord_to_int destination in
-      let piece = position.(start_f).(start_r) in *)
-      (* prev_positions := (Array.copy position) :: !prev_positions; *)
+
+    let take_turn () : unit =
       prev_positions := (copy_pieces ()) :: !prev_positions;
-      (* position.(start_f).(start_r) <- None;
-      position.(end_f).(end_r) <- piece; *)
-      total_moves := not !total_moves ;;
-      
+      flip_turn () 
+    ;;
+
     let take_back () = 
-      (* let prev_position = List.hd (List.tl !prev_positions) in *)
       let prev_position = List.hd !prev_positions in
-      (* List.iter print_board !prev_positions; *)
-      (* print_board prev_position; *)
-      (* Array.iteri (fun y m -> 
-        Array.iteri (fun x piece_opt ->
-                      position.(x).(y) <- piece_opt;
-                      match piece_opt with
-                      | Some piece -> register piece
-                      | None -> ()
-                    ) m) prev_position ;; *)
       registrants := Registrants.empty;
       let rec update_position (lst : piece_type list) : unit = 
         match lst with 
@@ -258,7 +222,7 @@ module Registry : REGISTRY =
         | hd :: tl -> register hd; update_position tl 
       in 
       update_position prev_position;
-      total_moves := not !total_moves ;;
+      whose_turn := not !whose_turn ;;
 
     let subset (color : bool) : piece_type list = 
       let s  = Registrants.filter (fun obj -> obj#get_color = color) !registrants in
@@ -341,26 +305,6 @@ module Registry : REGISTRY =
       (List.for_all (fun obj -> not (obj#can_be_valid_move my_king_pos)) opp_pieces_not_king) &&
       (opp_king#chebyshev_distance_to my_king_pos > 1)
     ;;
-
-    (* let print_registry () : unit = 
-      let color_to_string (b : bool) : string = 
-        if b then "white" else "black" in
-      let all_pieces = Registrants.elements !registrants in 
-      let num_pieces = Registrants.cardinal !registrants in
-      let rec print_list (lst : piece_type list) : unit =
-        match lst with 
-        | [] -> ()
-        | hd :: tl -> 
-          Printf.printf "%s %s %s \n" 
-          (color_to_string hd#get_color) 
-          hd#name 
-          (coord_to_string hd#get_pos);
-          print_list tl
-      in
-      print_list all_pieces;
-      Printf.printf "%d \n" num_pieces;
-      Printf.printf "-------------------------\n"
-    ;; *)
     
   end
 

@@ -36,32 +36,11 @@ let initialize () =
 (* Drawing simple shapes*)
 let draw_square (c : G.color) (y : int) (x : int) (w : int) (h : int) : unit =
   G.set_color c;
-  G.fill_rect (x * w) ((cY_DIMENSION * cPIXELS_PER_BLOCK) - h - y * h) w h ;;
-
-
-(* Draws the chess board *)
-let draw_board () : unit =
-  G.set_line_width cLINEWIDTH;
-  for x = 0 to 7 do
-    for y = 0 to 7 do
-      if (x + y) mod 2 = 0 then draw_square cWHITECOLOR y x cSQUARE_WIDTH cSQUARE_HEIGHT
-      else draw_square cBLACKCOLOR y x cSQUARE_WIDTH cSQUARE_HEIGHT
-    done;
-  done;
-  (* Array.iteri (fun y m -> 
-                Array.iteri (fun x _piece_opt ->
-                              if (x + y) mod 2 = 0 then draw_square cWHITECOLOR y x cSQUARE_WIDTH cSQUARE_HEIGHT
-                              else draw_square cBLACKCOLOR y x cSQUARE_WIDTH cSQUARE_HEIGHT
-                              (* match piece_opt with
-                              | Some piece -> piece#draw
-                              | None -> () *)
-                            ) m) board ; *)
-  R.get_pieces ()
-  |> List.iter (fun piece -> piece#draw) ;;
+  G.fill_rect (x * w) ((cY_BOARDSIZE * cPIXELS_PER_BLOCK) - h - y * h) w h ;;
 
 
 (* Given the chess coordinates of a specific squares, outlines that square in
-      a different color to indicate selection *)
+a different color to indicate selection *)
 let highlight_square (c : coordinate) : unit =
   let (x, y) = coord_to_int c in
   let (corner_x, corner_y) = (cSQUARE_WIDTH * x, cSQUARE_HEIGHT * y) in
@@ -71,7 +50,7 @@ let highlight_square (c : coordinate) : unit =
 
 
 (* Given (x, y) coordiantes in the graphics window, converts them 
-    into (file, rank) chess coordinates *)
+into (file, rank) chess coordinates *)
 let get_coords (x : int) (y : int) : coordinate = 
   let reduce_x = x - (x mod cSQUARE_WIDTH) in
   let reduce_y = y - (y mod cSQUARE_HEIGHT) in
@@ -79,7 +58,39 @@ let get_coords (x : int) (y : int) : coordinate =
   let r = (int_to_rank ((reduce_y / cSQUARE_HEIGHT))) in
   f, r
 ;;
+  
+(* Draws the chess board *)
+let draw_board () : unit =
+  G.set_line_width cLINEWIDTH;
+  for x = 0 to 7 do
+    for y = 0 to 7 do
+      if (x + y) mod 2 = 0 then draw_square cWHITECOLOR y x cSQUARE_WIDTH cSQUARE_HEIGHT
+      else draw_square cBLACKCOLOR y x cSQUARE_WIDTH cSQUARE_HEIGHT
+    done;
+  done;
 
+  (* draw file coordinates *)
+  G.set_color G.black;
+  for f = 0 to 7 do
+    G.moveto (cX_BOARDSIZE * f + (cSQUARE_WIDTH / 2)) (cY_BOARDSIZE * cPIXELS_PER_BLOCK + 5);
+    let fi = int_to_file f in
+    G.draw_string (file_to_string fi);
+  done;
+  (* draw rank coordinates *)
+  for r = 0 to 7 do
+    G.moveto (cX_BOARDSIZE * cPIXELS_PER_BLOCK + 5) (cY_BOARDSIZE * r + (cSQUARE_HEIGHT / 2));
+    let ra = int_to_rank r in
+    G.draw_string (rank_to_string ra);
+  done;
+(* draw take back button *)
+  let x, y = ((cX_BOARDSIZE * cPIXELS_PER_BLOCK) + (cSQUARE_WIDTH*cPIXELS_PER_BLOCK)), ((cY_BOARDSIZE * cPIXELS_PER_BLOCK) / 2) in
+  draw_square G.blue y x cSQUARE_WIDTH cSQUARE_HEIGHT;
+  G.moveto (x + (cSQUARE_WIDTH / 2)) (y + (cSQUARE_HEIGHT / 2));
+  G.set_color G.magenta;
+  G.draw_string "Take back";
+  (* draw pieces on board *)
+  R.get_pieces ()
+  |> List.iter (fun piece -> piece#draw) ;;
 
 (* take_turn : Waits for the execution of a move which involves:
         - selecting one of your own pieces (can change as many times as you want)
@@ -97,15 +108,13 @@ let take_turn () =
       (G.set_color G.red;
       G.draw_string "Cannot move here")
     else
-      (let prev = piece#get_pos in
-      piece#make_move (f, r);
+      (piece#make_move (f, r);
       if R.player_not_in_check piece#get_color then
         (G.clear_graph ();
         draw_board ();
         moved := true)
       else
         (R.take_back ();
-        (* piece#make_move (prev); *)
         G.clear_graph ();
         draw_board ();
         G.set_color G.magenta;
@@ -114,48 +123,37 @@ let take_turn () =
   
   let selected : T.piece_type option ref = ref None in
 
-  (* let draw_coords (coord : coordinate) : unit =
-    G.clear_graph ();
-    draw_board ();
-    (match !selected with
-    | None -> ()
-    | Some piece -> highlight_square piece#get_pos);
-    let (int_f, int_r) = coord_to_int coord in
-    G.moveto ((int_f * cSQUARE_WIDTH) + (cSQUARE_WIDTH / 2)) ((int_r * cSQUARE_HEIGHT) + (cSQUARE_HEIGHT / 2));
-    G.set_color cHOVER_COLOR;
-    G.draw_string (coord_to_string coord);
-  in *)
-
   (* Continously poll for clicks until a 
         piece has been moved *)
   while not !moved do
-    let s = G.wait_next_event [G.Button_down(* ; G.Mouse_motion *)] in
+    let s = G.wait_next_event [G.Button_down] in
     let x, y = s.mouse_x, s.mouse_y in
-    let (f, r)  = get_coords x y in
-    (* draw_coords (f, r); *)
-    (* if G.button_down () then  *)
-      let p = R.find_piece (f, r) in
-      match p with
-      | None -> 
-        begin
-            match !selected with
-            | None -> ()
-            | Some s -> move_piece s (f, r)
-        end
-      | Some piece ->
-        begin
-          if piece#get_color = R.turn () then
-            (selected := Some piece;
-            G.clear_graph();
-            draw_board ();
-            highlight_square piece#get_pos)
-          else
-            match !selected with
-            | None -> G.moveto x y;
-                      G.set_color G.red;
-                      G.draw_string "Not your turn"
-            | Some s -> move_piece s (f, r)
-        end
+    if x > (cX_BOARDSIZE * cPIXELS_PER_BLOCK) || y > (cY_BOARDSIZE * cPIXELS_PER_BLOCK) then
+      ()
+    else
+      (let (f, r)  = get_coords x y in
+        let p = R.find_piece (f, r) in
+        match p with
+        | None -> 
+          begin
+              match !selected with
+              | None -> ()
+              | Some s -> move_piece s (f, r)
+          end
+        | Some piece ->
+          begin
+            if piece#get_color = R.turn () then
+              (selected := Some piece;
+              G.clear_graph();
+              draw_board ();
+              highlight_square piece#get_pos)
+            else
+              match !selected with
+              | None -> G.moveto x y;
+                        G.set_color G.red;
+                        G.draw_string "Not your turn"
+              | Some s -> move_piece s (f, r)
+          end)
   done;;
 
 let print_board (pos : (T.piece_type option) array array) : unit =
