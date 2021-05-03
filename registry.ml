@@ -230,13 +230,13 @@ module Registry : REGISTRY =
       List.map (Oo.copy) (get_pieces ());;
 
     let move_piece (start : coordinate) (destination : coordinate) : unit =
-      let (start_f, start_r) = coord_to_int start in
+      (* let (start_f, start_r) = coord_to_int start in
       let (end_f, end_r) = coord_to_int destination in
-      let piece = position.(start_f).(start_r) in
+      let piece = position.(start_f).(start_r) in *)
       (* prev_positions := (Array.copy position) :: !prev_positions; *)
       prev_positions := (copy_pieces ()) :: !prev_positions;
-      position.(start_f).(start_r) <- None;
-      position.(end_f).(end_r) <- piece;
+      (* position.(start_f).(start_r) <- None;
+      position.(end_f).(end_r) <- piece; *)
       total_moves := not !total_moves ;;
       
     let take_back () = 

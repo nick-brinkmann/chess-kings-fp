@@ -4,17 +4,6 @@ module T = Registry ;;
 module R = T.Registry ;;
 module P = Pieces ;;
 module Viz = Visualization ;;
-  
-let test_array = [|
-    [| 1; 1; 1; 1; 1; 1; 1; 1|];
-    [| 1; 1; 1; 1; 1; 1; 1; 1|];
-    [| 1; 1; 1; 1; 1; 1; 1; 1|];
-    [| 1; 1; 1; 1; 1; 1; 1; 1|];
-    [| 1; 1; 1; 1; 1; 1; 1; 1|];
-    [| 1; 1; 1; 1; 1; 1; 1; 1|];
-    [| 1; 1; 1; 1; 1; 1; 1; 1|];
-    [| 1; 1; 1; 1; 1; 1; 1; 1|];
-|]
 
 let initialize_pieces () = 
   (* initialize pawns *)
@@ -54,7 +43,7 @@ let run () =
   let end_game = ref false in
   while not !end_game do
 
-    Viz.render R.get_position ;
+    Viz.render () ;
     (* R.print_registry () ; *)
 
     if not (Viz.move_on ()) then end_game := true

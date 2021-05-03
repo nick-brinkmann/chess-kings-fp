@@ -40,16 +40,22 @@ let draw_square (c : G.color) (y : int) (x : int) (w : int) (h : int) : unit =
 
 
 (* Draws the chess board *)
-let draw_board (board : (T.piece_type option) array array) : unit =
+let draw_board () : unit =
   G.set_line_width cLINEWIDTH;
-  Array.iteri (fun y m -> 
+  for x = 0 to 7 do
+    for y = 0 to 7 do
+      if (x + y) mod 2 = 0 then draw_square cWHITECOLOR y x cSQUARE_WIDTH cSQUARE_HEIGHT
+      else draw_square cBLACKCOLOR y x cSQUARE_WIDTH cSQUARE_HEIGHT
+    done;
+  done;
+  (* Array.iteri (fun y m -> 
                 Array.iteri (fun x _piece_opt ->
                               if (x + y) mod 2 = 0 then draw_square cWHITECOLOR y x cSQUARE_WIDTH cSQUARE_HEIGHT
                               else draw_square cBLACKCOLOR y x cSQUARE_WIDTH cSQUARE_HEIGHT
                               (* match piece_opt with
                               | Some piece -> piece#draw
                               | None -> () *)
-                            ) m) board ;
+                            ) m) board ; *)
   R.get_pieces ()
   |> List.iter (fun piece -> piece#draw) ;;
 
@@ -95,13 +101,13 @@ let take_turn () =
       piece#make_move (f, r);
       if R.player_not_in_check piece#get_color then
         (G.clear_graph ();
-        draw_board R.get_position;
+        draw_board ();
         moved := true)
       else
         (R.take_back ();
         (* piece#make_move (prev); *)
         G.clear_graph ();
-        draw_board R.get_position;
+        draw_board ();
         G.set_color G.magenta;
         G.draw_string "Invalid move"))
   in
@@ -110,7 +116,7 @@ let take_turn () =
 
   (* let draw_coords (coord : coordinate) : unit =
     G.clear_graph ();
-    draw_board R.get_position;
+    draw_board ();
     (match !selected with
     | None -> ()
     | Some piece -> highlight_square piece#get_pos);
@@ -141,7 +147,7 @@ let take_turn () =
           if piece#get_color = R.turn () then
             (selected := Some piece;
             G.clear_graph();
-            draw_board R.get_position;
+            draw_board ();
             highlight_square piece#get_pos)
           else
             match !selected with
@@ -162,9 +168,9 @@ let print_board (pos : (T.piece_type option) array array) : unit =
 ;;
 
 (* Renders the game, waits for next move *)
-let render board = 
+let render () = 
   G.clear_graph ();
-  draw_board board;
+  draw_board ();
 
   (* At this point we need functions for logic of game
       -- Await move = wait for some type of input
