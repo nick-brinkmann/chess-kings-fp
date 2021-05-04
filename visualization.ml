@@ -187,14 +187,14 @@ let render () =
                     modify piece value or not *)
 
   take_turn ();
-  if R.checkmate_check () then
+  (* if R.checkmate_check () then
     (G.moveto (cX_BOARDSIZE * cPIXELS_PER_BLOCK / 2) (cY_BOARDSIZE * cPIXELS_PER_BLOCK / 2);
     G.set_color G.magenta;
     G.draw_string "Checkmate!")
   else if R.check_stalemate () then
     (G.moveto (cX_BOARDSIZE * cPIXELS_PER_BLOCK / 2) (cY_BOARDSIZE * cPIXELS_PER_BLOCK / 2);
     G.set_color G.magenta;
-    G.draw_string "Stalemate!");
+    G.draw_string "Stalemate!"); *)
 
   G.synchronize ()
 ;;

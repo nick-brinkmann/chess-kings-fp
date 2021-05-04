@@ -72,7 +72,7 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
       last_move.start_square <- self#get_pos;
       last_move.end_square <- coord;
       (*debugging purposes*)
-      Printf.printf "%s %s -> %s \n" last_move.piece 
+      Printf.printf "%s %s-%s \n" last_move.piece 
       (coord_to_string last_move.start_square) 
       (coord_to_string last_move.end_square);
       f <- new_f;
@@ -288,15 +288,34 @@ object(self)
 
   method! can_be_valid_move (coord : coordinate) : bool = 
     (* Checks that no opponent pieces attack the square the king moves to *)
-    let opponent_pieces = R.subset (not (super#get_color)) in 
-    let opp_king = 
-      List.filter (fun obj -> obj#is_king) opponent_pieces
-      |> List.hd 
+    let all_opp_pieces = R.subset (not (super#get_color)) in 
+    let opp_king : T.piece_type = 
+      List.filter (fun obj -> obj#is_king) all_opp_pieces
+      |> List.hd in
+    (* have to treat pawns differently, since the king can move in front of
+       pawns, which are counted as legal moves for pawns but don't put the king 
+      in check *)
+    let opp_pawns : T.piece_type list =
+      List.filter (fun obj -> obj#name = "pawn") all_opp_pieces 
+    in  
+    let opp_other_pieces : T.piece_type list = 
+      List.filter (fun obj -> (not obj#is_king) && (not (obj#name = "pawn"))) 
+      all_opp_pieces 
     in 
-    let opp_pieces_not_king = 
-      List.filter (fun obj -> not obj#is_king) opponent_pieces in 
-    let is_not_attacked (coord : coordinate) (pieces : T.piece_type list) : bool = 
-      List.for_all (fun obj -> not (obj#can_be_valid_move coord)) pieces in
+    let pieces_dont_attack (coord : coordinate) : bool = 
+      List.for_all (fun obj -> not (obj#can_be_valid_move coord)) opp_other_pieces 
+    in
+    let pawns_dont_attack (coord : coordinate) : bool =
+      List.for_all 
+      (* either pawns cannot move to the square, OR the square is on the same
+        file as the pawn, i.e. the pawn does not threaten the square. *)
+      (fun obj -> 
+        not (obj#can_be_valid_move coord) || 
+        (fst coord) = (fst obj#get_pos)) 
+      opp_pawns
+    in  
+    Printf.printf "Gotten this far \n";
+
     (* Castling related logic, used below *)
     let new_f, new_r = coord_to_int coord in
     let starting_rank : rank = if super#get_color then R1 else R8 in
@@ -309,7 +328,8 @@ object(self)
       in
       (new_f = 6) && (new_r = 7 - (if super#get_color then 7 else 0)) &&
       (super#get_moves = 0) && (h_rook_not_moved) && 
-      (is_not_attacked (F, starting_rank) opp_pieces_not_king) &&
+      (pieces_dont_attack (F, starting_rank)) &&
+      (pawns_dont_attack (F, starting_rank)) &&
       (not (R.contains_any_piece (F, starting_rank))) && 
       (not (R.contains_any_piece (G, starting_rank)))
     in 
@@ -322,7 +342,8 @@ object(self)
       in
       (new_f = 2) && (new_r = 7 - (if super#get_color then 7 else 0)) &&
       (super#get_moves = 0) && (a_rook_not_moved) && 
-      (is_not_attacked (D, starting_rank) opp_pieces_not_king) &&
+      (pieces_dont_attack (D, starting_rank)) &&
+      (pawns_dont_attack (D, starting_rank)) &&
       (not (R.contains_any_piece (D, starting_rank))) &&
       (not (R.contains_any_piece (C, starting_rank))) &&
       (not (R.contains_any_piece (B, starting_rank)))
@@ -332,7 +353,8 @@ object(self)
     - no pieces attacking ending square
     - Chebyshev distance = 1
     - No friendly piece at square *)
-    (is_not_attacked coord opp_pieces_not_king) &&
+    (pieces_dont_attack coord) &&
+    (pawns_dont_attack coord) &&
     ((opp_king#chebyshev_distance_to coord) > 1) && 
     (* above always holds. Now disjoint cases for castling and other *)
     (
@@ -346,7 +368,6 @@ object(self)
     - if queenside castling, no piece on b1/b8
     - neither king nor rook has moved yet  *)
     (* castling logic for both kingside and queenside *)
-    (is_not_attacked coord opp_pieces_not_king) &&
     ((self#chebyshev_distance_to coord) = 2) &&
     ((opp_king#chebyshev_distance_to coord) > 1) &&
     (

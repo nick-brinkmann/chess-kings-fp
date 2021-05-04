@@ -335,7 +335,7 @@ module Registry : REGISTRY =
               piece#make_move (f, r);
               if player_not_in_check (not !whose_turn) then
                 has_valid_move := true;
-                Printf.printf "valid move exists \n";
+                (* Printf.printf "valid move exists \n"; *)
               take_back ());
             j := !j + 1;
           done;
