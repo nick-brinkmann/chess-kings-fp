@@ -332,10 +332,12 @@ module Registry : REGISTRY =
             if piece#can_be_valid_move (f, r) then
               (* make provisional move and verify that wouldn't put player in check *)
               (take_turn ();
+              let prev = piece#get_pos in
               piece#make_move (f, r);
               if player_not_in_check (not !whose_turn) then
-                has_valid_move := true;
-                Printf.printf "valid move exists \n";
+                (has_valid_move := true;
+                Printf.printf "valid move exists \n");
+              piece#make_move prev;
               take_back ());
             j := !j + 1;
           done;

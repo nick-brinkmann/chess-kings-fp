@@ -62,7 +62,10 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
       | None -> () 
       | Some piece -> 
         (if piece#get_color = self#get_color then 
-          raise (Invalid_argument "make_move: trying to move onto own piece")
+          (Printf.printf "attempted %s %s -> %s \n" piece#name 
+                                         (coord_to_string piece#get_pos)
+                                         (coord_to_string coord);
+          raise (Invalid_argument "make_move: trying to move onto own piece"))
          else R.deregister piece)
       in
       delete_opp_piece ();
@@ -72,7 +75,7 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
       last_move.start_square <- self#get_pos;
       last_move.end_square <- coord;
       (*debugging purposes*)
-      Printf.printf "%s %s -> %s \n" last_move.piece 
+      Printf.printf "%s %s-%s \n" last_move.piece 
       (coord_to_string last_move.start_square) 
       (coord_to_string last_move.end_square);
       f <- new_f;
