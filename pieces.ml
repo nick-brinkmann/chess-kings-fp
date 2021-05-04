@@ -18,14 +18,14 @@ type move_memory =
   }
 ;;
 
-let last_move : move_memory = 
+(* let last_move : move_memory = 
   {
   player = false;
   piece = "";
   start_square = A,R1;
   end_square = A,R1
   }
-;;
+;; *)
 
 
 class piece (initfile : file) (initrank : rank) (p : bool) = 
@@ -66,18 +66,19 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
          else R.deregister piece)
       in
       delete_opp_piece ();
-      (* updates last_move record *)
-      last_move.player <- self#get_color;
+      (* updates move history *)
+      (* last_move.player <- self#get_color;
       last_move.piece <- self#name;
       last_move.start_square <- self#get_pos;
-      last_move.end_square <- coord;
-      (*debugging purposes*)
-      Printf.printf "%s %s-%s \n" last_move.piece 
-      (coord_to_string last_move.start_square) 
-      (coord_to_string last_move.end_square);
+      last_move.end_square <- coord; *)
+      R.add_move (self :> T.piece_type) coord;
       f <- new_f;
       r <- new_r;
       moves <- moves + 1
+      (*debugging purposes*)
+      (* Printf.printf "%s %s-%s \n" last_move.piece 
+      (coord_to_string last_move.start_square) 
+      (coord_to_string last_move.end_square) *)
 
     method can_be_valid_move (_c : coordinate) : bool = 
       false
@@ -123,7 +124,11 @@ object (self)
       (not (R.is_piece_along_line_from coord super#get_pos)) &&
       (not (R.contains_any_piece coord)) then true 
     (* en passant *)
-    else last_move.player <> self#get_color && last_move.piece = "pawn" &&
+    else 
+      match R.last_move () with
+      | None -> false 
+      | Some last_move ->
+    last_move.player <> self#get_color && last_move.piece = "pawn" &&
     (fst last_move.end_square) = end_file && 
     (rank_to_int (snd last_move.end_square)) = curr_ra &&
     abs (end_fi - curr_fi) = 1 &&
@@ -134,12 +139,19 @@ object (self)
     (* en passant *)
     let end_fi, end_ra = coord_to_int coord in 
     let curr_fi, curr_ra = coord_to_int super#get_pos in 
-    if last_move.player <> self#get_color && last_move.piece = "pawn" &&
+
+    let en_passant_possible : bool = match R.last_move () with 
+    | None -> false
+    | Some last_move ->
+      last_move.player <> self#get_color && last_move.piece = "pawn" &&
       (fst last_move.end_square) = new_f && 
       (rank_to_int (snd last_move.end_square)) = curr_ra &&
       abs (end_fi - curr_fi) = 1 &&
       (snd last_move.start_square) = (if last_move.player then R2 else R7)
-    then
+    in
+
+    (* execute en passant*)
+    if en_passant_possible then
       begin
         super#make_move coord;
         match R.find_piece 

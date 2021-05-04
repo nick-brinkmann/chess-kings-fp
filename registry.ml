@@ -41,6 +41,16 @@ class type piece_type =
 
   end ;;
 
+  (* Global variable for whether en-passant is possible. *)
+type move_memory = 
+{
+mutable player : bool;
+mutable piece : string;
+mutable start_square : coordinate;
+mutable end_square : coordinate
+}
+;;
+
 (*....................................................................
   A piece_type registry
  *)
@@ -104,8 +114,14 @@ module type REGISTRY =
     (* prints the registry *)
     val print_registry : unit -> unit
 
+    (* adds a move to the move history data structure. *)
+    val add_move : piece_type -> coordinate -> unit
+
     (* takes back the last move *)
     val take_back : unit -> unit 
+
+    (* returns the last move, if possible *)
+    val last_move : unit -> move_memory option
 
     val check_stalemate : unit -> bool
 
@@ -125,7 +141,6 @@ module Registry : REGISTRY =
 
     (* initialize registry of pieces to empty set *)
     let registrants = ref Registrants.empty ;;
-
 
     let print_registry () : unit = 
       let color_to_string (b : bool) : string = 
@@ -147,7 +162,7 @@ module Registry : REGISTRY =
       Printf.printf "-------------------------\n"
     ;;
 
-    (* let whose_turn = ref true ;; *)
+    (* whose_turn -- controls whose move it is *)
     let whose_turn = ref true ;;
 
     (* turn () : checks the number of moves that have been made thus far. If
@@ -177,15 +192,12 @@ module Registry : REGISTRY =
         begin
           registrants := new_registrants;
         end ;;
-      
 
     (* get_pieces () : Returns a list of the pieces in the registry *)
     let get_pieces () = Registrants.elements !registrants ;;
 
 
     let find_piece coord : piece_type option = 
-      (* let color_to_string (b : bool) : string = 
-        if b then "white" else "black" in *)
       (* filter piece registry by pieces on coord *)
       let subset = Registrants.filter (fun obj -> obj#get_pos = coord) !registrants in
       (* if the subset has more than one piece, then we have broken an invariant *)
@@ -193,16 +205,7 @@ module Registry : REGISTRY =
         raise (Invalid_argument "find_piece: Multiple pieces on the same square")
       else
         Registrants.choose_opt subset
-      (* match Registrants.choose_opt subset with 
-      | None -> None 
-      | Some obj -> 
-        Printf.printf "%s %s %s \n" 
-        (color_to_string obj#get_color)
-        (obj#name)
-        (coord_to_string obj#get_pos);
-        Some obj *)
     ;;
-
 
     (* copy_pieces (): helper function that returns a list of pieces as they 
                        currently are in the registry, essentially taking a copy
@@ -217,8 +220,60 @@ module Registry : REGISTRY =
       flip_turn () 
     ;;
 
+    (* move history stores a list of:
+      - moves (player, piece, start and end square) 
+      - the positions that those moves result in, 
+          stored as the registry in list form.
+      Initialized as the empty list.
+    *)
+    let move_history : (move_memory * (piece_type list)) list ref = 
+      ref [] ;;
+
+    (* adds a move to the move history. *)
+    let add_move (piece : piece_type) (coord : coordinate) : unit = 
+      let to_add : move_memory = 
+        {
+          player = piece#get_color;
+          piece = piece#name;
+          start_square = piece#get_pos;
+          end_square = coord;
+        }
+      in 
+      move_history := (to_add, copy_pieces ()) :: !move_history ;;
+
+    (* last_move () -- if there has been a last move (i.e. the game has started) 
+      returns the move. *)
+    let last_move () : move_memory option = 
+      match !move_history with 
+      | [] -> None
+      | (move, _position) :: _tl -> Some move ;;
+
+    (* take_back () -- takes back the last move, if possible. *)
     let take_back () =
-      if !prev_positions = [] then
+      (* empties the registry and repopulates it *)
+      let rec update_position (lst : piece_type list) : unit = 
+        match lst with 
+        | [] -> ()
+        | hd :: tl -> register hd; update_position tl 
+      in
+      (* if no moves made yet, do nothing. otherwise take back a move. *)
+      match !move_history with 
+      | [] -> ()
+      | (_, position) :: tl ->
+        (
+          registrants := Registrants.empty;
+          update_position position;
+          move_history := tl;
+          flip_turn ()
+        )
+      (* | Some _move_mem, piece_lst -> 
+        (
+          registrants := Registrants.empty;
+          update_position piece_lst;
+          move_history := List.tl !move_history;
+          flip_turn ()
+        ) *)
+      (* if !prev_positions = [] then
         ()
       else
         (let prev_position = List.hd !prev_positions in
@@ -231,6 +286,7 @@ module Registry : REGISTRY =
         update_position prev_position;
         prev_positions := List.tl !prev_positions;
         flip_turn ())
+        *)
     ;;
 
     let subset (color : bool) : piece_type list = 
