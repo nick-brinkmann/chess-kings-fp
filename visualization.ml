@@ -3,17 +3,11 @@ open Params ;;
 module G = Graphics ;;
 module T = Registry ;;
 module R = T.Registry ;;
-module P = Pieces ;;
 
 
 let move_on () =
   if G.read_key () = 'q' then false
   else true
-  (* let s = G.wait_next_event [G.Poll] in
-  if s.key = 'q' then
-    false
-  else 
-    true *)
 ;;
 
 
@@ -94,6 +88,8 @@ let draw_board () : unit =
   |> List.iter (fun piece -> piece#draw) ;;
 
 
+
+
 (* take_turn : Waits for the execution of a move which involves:
         - selecting one of your own pieces (can change as many times as you want)
         - selecting a valid square to which you move selected piece *)
@@ -119,6 +115,7 @@ let take_turn () =
         (R.take_back ();
         G.clear_graph ();
         draw_board ();
+        G.moveto (cX_BOARDSIZE*cPIXELS_PER_BLOCK / 2) (cY_BOARDSIZE * cPIXELS_PER_BLOCK / 2);
         G.set_color G.magenta;
         G.draw_string "You're in check!"))
   in
@@ -187,14 +184,14 @@ let render () =
                     modify piece value or not *)
 
   take_turn ();
-  (* if R.checkmate_check () then
+  if R.checkmate_check () then
     (G.moveto (cX_BOARDSIZE * cPIXELS_PER_BLOCK / 2) (cY_BOARDSIZE * cPIXELS_PER_BLOCK / 2);
     G.set_color G.magenta;
     G.draw_string "Checkmate!")
   else if R.check_stalemate () then
     (G.moveto (cX_BOARDSIZE * cPIXELS_PER_BLOCK / 2) (cY_BOARDSIZE * cPIXELS_PER_BLOCK / 2);
     G.set_color G.magenta;
-    G.draw_string "Stalemate!"); *)
+    G.draw_string "Stalemate!");
 
   G.synchronize ()
 ;;

@@ -23,3 +23,4 @@ let cSELECTED_COLOR = G.red ;;
 let cHOVER_COLOR = G.rgb 214 213 212;;
 let cUNDO_BACKGROUND = G.yellow ;;
 let cUNDO_TEXT_COLOR = G.black ;;
+let cPROMOTE_COLOR = G.rgb 212 211 210 ;;

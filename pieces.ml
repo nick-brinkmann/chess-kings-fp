@@ -7,6 +7,10 @@ open Params ;;
 module G = Graphics ;;
 module T = Registry ;;
 module R = T.Registry ;;
+module Viz = Visualization ;;
+
+
+
 
 (* Global variable for whether en-passant is possible. *)
 type move_memory = 
@@ -62,7 +66,10 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
       | None -> () 
       | Some piece -> 
         (if piece#get_color = self#get_color then 
-          raise (Invalid_argument "make_move: trying to move onto own piece")
+          (Printf.printf "attempted %s %s -> %s \n" piece#name 
+                                         (coord_to_string piece#get_pos)
+                                         (coord_to_string coord);
+          raise (Invalid_argument "make_move: trying to move onto own piece"))
          else R.deregister piece)
       in
       delete_opp_piece ();
@@ -167,7 +174,74 @@ object (self)
     if new_rank_int = 7 - (if super#get_color then 0 else 1) * 7 then
       begin
         R.deregister (self :> T.piece_type);
-        R.register ((new queen new_f new_r self#get_color) :> T.piece_type);
+        (* this functin gets called when a pawn promotes *)
+        let promote (pawn : T.piece_type) =
+          let (end_f, end_r) = coord_to_int pawn#get_pos in
+          let c = pawn#get_color in
+          let direction = (if c then -1 else 1) in
+          (* draw queen option *)
+          Viz.draw_square cPROMOTE_COLOR (end_r + (direction * 1)) end_f cSQUARE_WIDTH cSQUARE_HEIGHT;
+          G.moveto (end_f * cSQUARE_WIDTH + (cSQUARE_WIDTH / 2)) 
+                  ((end_r + (direction * 1))*cSQUARE_HEIGHT + (cSQUARE_HEIGHT / 2));
+          G.set_color G.black;
+          G.draw_string "Queen";
+
+          (* draw rook option *)
+          Viz.draw_square cPROMOTE_COLOR (end_r + (direction * 2)) end_f cSQUARE_WIDTH cSQUARE_HEIGHT;
+          G.moveto (end_f * cSQUARE_WIDTH + (cSQUARE_WIDTH / 2)) 
+                  ((end_r + (direction * 2))*cSQUARE_HEIGHT + (cSQUARE_HEIGHT / 2));
+          G.set_color G.black;
+          G.draw_string "Rook";
+          
+          (* draw bishop option *)
+          Viz.draw_square cPROMOTE_COLOR (end_r + (direction * 3)) end_f cSQUARE_WIDTH cSQUARE_HEIGHT;
+          G.moveto (end_f * cSQUARE_WIDTH + (cSQUARE_WIDTH / 2)) 
+                  ((end_r + (direction * 3))*cSQUARE_HEIGHT + (cSQUARE_HEIGHT / 2));
+          G.set_color G.black;
+          G.draw_string "Bishop";
+
+          (* draw knight option *)
+          Viz.draw_square cPROMOTE_COLOR (end_r + (direction * 4)) end_f cSQUARE_WIDTH cSQUARE_HEIGHT;
+          G.moveto (end_f * cSQUARE_WIDTH + (cSQUARE_WIDTH / 2)) 
+                  ((end_r + (direction * 4))*cSQUARE_HEIGHT + (cSQUARE_HEIGHT / 2));
+          G.set_color G.black;
+          G.draw_string "Knight";
+
+          let rec choose_piece () = 
+            let s = G.wait_next_event [G.Button_down] in
+            let x, y = s.mouse_x / cSQUARE_WIDTH, s.mouse_y / cSQUARE_HEIGHT in
+            if x <> end_f then
+              choose_piece ()
+            else
+              begin
+                (* chose queen *)
+                if y = end_r + (direction*1) then
+                  R.register ((new queen 
+                                   (int_to_file end_f)
+                                   (int_to_rank end_r) c) :> T.piece_type)
+                (* chose rook *)
+                else if y = end_r + (direction*2) then
+                  R.register ((new rook 
+                                   (int_to_file end_f)
+                                   (int_to_rank end_r) c) :> T.piece_type)
+                (* chose bishop *)
+                else if y = end_r + (direction*3) then
+                  R.register ((new bishop 
+                                   (int_to_file end_f)
+                                   (int_to_rank end_r) c) :> T.piece_type)
+                (* chose knight *)
+                else if y = end_r + (direction*4) then
+                  R.register ((new knight 
+                                   (int_to_file end_f)
+                                   (int_to_rank end_r) c) :> T.piece_type)
+                (* clicked elsewhere *)
+                else 
+                  choose_piece ()
+              end
+          in
+          choose_piece ();
+        in
+        promote (self :> T.piece_type);
       end
 
   method! draw : unit = 
