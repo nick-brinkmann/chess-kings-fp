@@ -57,7 +57,7 @@ let draw_board () : unit =
   G.set_line_width cLINEWIDTH;
   for x = 0 to 7 do
     for y = 0 to 7 do
-      if (x + y) mod 2 = 0 then draw_square cWHITECOLOR y x cSQUARE_WIDTH cSQUARE_HEIGHT
+      if (x + y) mod 2 = 1 then draw_square cWHITECOLOR y x cSQUARE_WIDTH cSQUARE_HEIGHT
       else draw_square cBLACKCOLOR y x cSQUARE_WIDTH cSQUARE_HEIGHT
     done;
   done;
@@ -65,13 +65,13 @@ let draw_board () : unit =
   (* draw file coordinates *)
   G.set_color G.black;
   for f = 0 to 7 do
-    G.moveto (cX_BOARDSIZE * f + (cSQUARE_WIDTH / 2)) (cY_BOARDSIZE * cPIXELS_PER_BLOCK + 5);
+    G.moveto (cSQUARE_WIDTH * f + (cSQUARE_WIDTH / 2)) (cY_BOARDSIZE * cPIXELS_PER_BLOCK + 5);
     let fi = int_to_file f in
     G.draw_string (file_to_string fi);
   done;
   (* draw rank coordinates *)
   for r = 0 to 7 do
-    G.moveto (cX_BOARDSIZE * cPIXELS_PER_BLOCK + 5) (cY_BOARDSIZE * r + (cSQUARE_HEIGHT / 2));
+    G.moveto (cX_BOARDSIZE * cPIXELS_PER_BLOCK + 5) (cSQUARE_HEIGHT * r + (cSQUARE_HEIGHT / 2));
     let ra = int_to_rank r in
     G.draw_string (rank_to_string ra);
   done;
@@ -184,14 +184,14 @@ let render () =
                     modify piece value or not *)
 
   take_turn ();
-  if R.checkmate_check () then
+  (* if R.checkmate_check () then
     (G.moveto (cX_BOARDSIZE * cPIXELS_PER_BLOCK / 2) (cY_BOARDSIZE * cPIXELS_PER_BLOCK / 2);
     G.set_color G.magenta;
     G.draw_string "Checkmate!")
   else if R.check_stalemate () then
     (G.moveto (cX_BOARDSIZE * cPIXELS_PER_BLOCK / 2) (cY_BOARDSIZE * cPIXELS_PER_BLOCK / 2);
     G.set_color G.magenta;
-    G.draw_string "Stalemate!");
+    G.draw_string "Stalemate!"); *)
 
   G.synchronize ()
 ;;

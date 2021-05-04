@@ -250,7 +250,6 @@ module Registry : REGISTRY =
 
     (* take_back () -- takes back the last move, if possible. *)
     let take_back () =
-<<<<<<< HEAD
       (* empties the registry and repopulates it *)
       let rec update_position (lst : piece_type list) : unit = 
         match lst with 
@@ -275,10 +274,6 @@ module Registry : REGISTRY =
           flip_turn ()
         ) *)
       (* if !prev_positions = [] then
-=======
-      (* If there are no stores previous positions do nothing *)
-      if !prev_positions = [] then
->>>>>>> a9618da052bb58cb163bcafee84b01f879f55e8a
         ()
       else
         (* Get the most recent previous position, empty current registry, 
