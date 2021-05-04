@@ -218,9 +218,12 @@ module Registry : REGISTRY =
     ;;
 
     let take_back () =
+      (* If there are no stores previous positions do nothing *)
       if !prev_positions = [] then
         ()
       else
+        (* Get the most recent previous position, empty current registry, 
+              and repopulate registry with pieces from previous position*)
         (let prev_position = List.hd !prev_positions in
         registrants := Registrants.empty;
         let rec update_position (lst : piece_type list) : unit = 
@@ -229,19 +232,27 @@ module Registry : REGISTRY =
           | hd :: tl -> register hd; update_position tl 
         in 
         update_position prev_position;
+        (* Remove the head from the previous positions list *)
         prev_positions := List.tl !prev_positions;
+        (* Set turn back to previous person's turn *)
         flip_turn ())
     ;;
 
     let subset (color : bool) : piece_type list = 
+      (* Filter the registrants, selecting only those of the specified color *)
       let s  = Registrants.filter (fun obj -> obj#get_color = color) !registrants in
+      (* return subset as a list rather than a set *)
       Registrants.elements s ;;
 
+    (* Finds piece on coordinate (if any), returns true if piece exists
+          and is of opposite color to specified player *)
     let contains_enemy_piece (your_color : bool) (coord : coordinate) : bool = 
       match find_piece coord with 
       | None -> false 
       | Some piece -> piece#get_color <> your_color ;;
-
+      
+    (* Finds piece on coordinate (if any), returns true if piece exists
+        and is of same color to specified player *)
     let contains_own_piece (your_color : bool) (coord : coordinate) : bool = 
       match find_piece coord with 
       | None -> false 
@@ -302,15 +313,22 @@ module Registry : REGISTRY =
     (* Checks if player is in check by checking whether pieces are attacking
           the square that their king is occupying *)
     let player_not_in_check (player : bool) : bool = 
+      (* Gets list of opponent piece objects *)
       let opponent_pieces = subset (not player) in 
+      (* Gets opponent king from list *)
       let opp_king = List.find (fun obj -> obj#is_king) opponent_pieces in
+      (* Removes opponent king from list *)
       let opp_pieces_not_king = 
         List.filter (fun obj -> not obj#is_king) opponent_pieces in 
+      (* Get plyers king *)
       let my_king = 
         subset player 
         |> List.find (fun obj -> obj#is_king)
       in
+      (* Gets king's position *)
       let my_king_pos = my_king#get_pos in
+      (* If no pieces can move to king's position, and the opponent king's square is not
+            adjacent to king's square, then return true *)
       (List.for_all (fun obj -> not (obj#can_be_valid_move my_king_pos)) opp_pieces_not_king) &&
       (opp_king#chebyshev_distance_to my_king_pos > 1)
     ;;
@@ -354,10 +372,14 @@ module Registry : REGISTRY =
       exist_val_moves my_pieces
     ;;
 
+    (* If the current player has no valid moves, and the king is currently 
+        under attack, return true. Otherwise false *)
     let checkmate_check () : bool = 
       (not (valid_moves_exist ())) && (not (player_not_in_check !whose_turn)) 
     ;;
 
+    (* If the current player has no valid moves, and the king is not currently
+        under attack, return true. Otherwise false *)
     let check_stalemate () : bool =
       (not (valid_moves_exist ())) && player_not_in_check !whose_turn
     ;;
