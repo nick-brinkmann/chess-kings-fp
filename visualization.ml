@@ -105,7 +105,7 @@ let take_turn () =
       (G.set_color G.red;
       G.draw_string "Cannot move here")
     else
-      (R.take_turn ();
+      (R.take_turn piece (f, r);
       piece#make_move (f, r);
       if R.player_not_in_check piece#get_color then
         (G.clear_graph ();
@@ -184,14 +184,16 @@ let render () =
                     modify piece value or not *)
 
   take_turn ();
-  (* if R.checkmate_check () then
-    (G.moveto (cX_BOARDSIZE * cPIXELS_PER_BLOCK / 2) (cY_BOARDSIZE * cPIXELS_PER_BLOCK / 2);
-    G.set_color G.magenta;
-    G.draw_string "Checkmate!")
+  if R.checkmate_check () then
+    begin
+      G.moveto (cX_BOARDSIZE * cPIXELS_PER_BLOCK / 2) (cY_BOARDSIZE * cPIXELS_PER_BLOCK / 2);
+      G.set_color G.magenta;
+      G.draw_string "Checkmate!"
+    end
   else if R.check_stalemate () then
     (G.moveto (cX_BOARDSIZE * cPIXELS_PER_BLOCK / 2) (cY_BOARDSIZE * cPIXELS_PER_BLOCK / 2);
     G.set_color G.magenta;
-    G.draw_string "Stalemate!"); *)
+    G.draw_string "Stalemate!");
 
   G.synchronize ()
 ;;

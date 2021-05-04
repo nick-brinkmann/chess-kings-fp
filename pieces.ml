@@ -1,7 +1,3 @@
-(* ............................................................................
-                        Class types for pieces
-   ......................................................................... *)
-
 open Game ;;
 open Params ;;
 module G = Graphics ;;
@@ -9,28 +5,9 @@ module T = Registry ;;
 module R = T.Registry ;;
 module Viz = Visualization ;;
 
-
-
-
-(* Global variable for whether en-passant is possible. *)
-type move_memory = 
-  {
-  mutable player : bool;
-  mutable piece : string;
-  mutable start_square : coordinate;
-  mutable end_square : coordinate
-  }
-;;
-
-(* let last_move : move_memory = 
-  {
-  player = false;
-  piece = "";
-  start_square = A,R1;
-  end_square = A,R1
-  }
-;; *)
-
+(* ............................................................................
+                        Class types for pieces
+   ......................................................................... *)
 
 class piece (initfile : file) (initrank : rank) (p : bool) = 
   object (self)
@@ -62,23 +39,17 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
     method make_move ((new_f, new_r) as coord : coordinate) : unit = 
       (* if opponent piece at new coordinate, deregister that piece *)
       let delete_opp_piece () =
-      match R.find_piece coord with 
-      | None -> () 
-      | Some piece -> 
-        (if piece#get_color = self#get_color then 
-          (Printf.printf "attempted %s %s -> %s \n" piece#name 
-                                         (coord_to_string piece#get_pos)
-                                         (coord_to_string coord);
-          raise (Invalid_argument "make_move: trying to move onto own piece"))
-         else R.deregister piece)
+        match R.find_piece coord with 
+        | None -> () 
+        | Some piece -> 
+          (if piece#get_color = self#get_color then 
+            (Printf.printf "attempted to move %s onto %s (%s -> %s) \n" self#name piece#name 
+                                          (coord_to_string self#get_pos)
+                                          (coord_to_string coord);
+            raise (Invalid_argument "make_move: trying to move onto own piece"))
+          else R.deregister piece)
       in
-      (* delete_opp_piece (); *)
-      (* updates move history *)
-      (* last_move.player <- self#get_color;
-      last_move.piece <- self#name;
-      last_move.start_square <- self#get_pos;
-      last_move.end_square <- coord; *)
-      R.add_move (self :> T.piece_type) coord;
+      (* R.take_turn is called only in Visualization. *)
       delete_opp_piece ();
       f <- new_f;
       r <- new_r;
@@ -88,6 +59,7 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
       (coord_to_string last_move.start_square) 
       (coord_to_string last_move.end_square) *)
 
+    (* checks whether a piece can move to a coordinate. False by default. *)
     method can_be_valid_move (_c : coordinate) : bool = 
       false
 
@@ -400,8 +372,7 @@ object(self)
         not (obj#can_be_valid_move coord) || 
         (fst coord) = (fst obj#get_pos)) 
       opp_pawns
-    in  
-    Printf.printf "Gotten this far \n";
+    in
 
     (* Castling related logic, used below *)
     let new_f, new_r = coord_to_int coord in
@@ -445,21 +416,21 @@ object(self)
     ((opp_king#chebyshev_distance_to coord) > 1) && 
     (* above always holds. Now disjoint cases for castling and other *)
     (
-    ((self#chebyshev_distance_to coord) = 1) &&
-    (not (R.contains_own_piece super#get_color coord)) ||
-    (* OR castling
-    - king moving to g1 or c1 (or g8/c8)
-    - no enemy pieces attacking ending square, starting square (no castling out
-      of check), or intervening square
-    - no pieces on intervening square/ending square
-    - if queenside castling, no piece on b1/b8
-    - neither king nor rook has moved yet  *)
-    (* castling logic for both kingside and queenside *)
-    ((self#chebyshev_distance_to coord) = 2) &&
-    ((opp_king#chebyshev_distance_to coord) > 1) &&
-    (
-      is_kingside_castling || is_queenside_castling
-    )
+      ((self#chebyshev_distance_to coord) = 1) &&
+      (not (R.contains_own_piece super#get_color coord)) ||
+      (* OR castling
+      - king moving to g1 or c1 (or g8/c8)
+      - no enemy pieces attacking ending square, starting square (no castling out
+        of check), or intervening square
+      - no pieces on intervening square/ending square
+      - if queenside castling, no piece on b1/b8
+      - neither king nor rook has moved yet  *)
+      (* castling logic for both kingside and queenside *)
+      ((self#chebyshev_distance_to coord) = 2) &&
+      ((opp_king#chebyshev_distance_to coord) > 1) &&
+      (
+        is_kingside_castling || is_queenside_castling
+      )
     )
 
   method! make_move (new_f, _new_r as coord : coordinate) : unit =
