@@ -72,13 +72,14 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
           raise (Invalid_argument "make_move: trying to move onto own piece"))
          else R.deregister piece)
       in
-      delete_opp_piece ();
+      (* delete_opp_piece (); *)
       (* updates move history *)
       (* last_move.player <- self#get_color;
       last_move.piece <- self#name;
       last_move.start_square <- self#get_pos;
       last_move.end_square <- coord; *)
       R.add_move (self :> T.piece_type) coord;
+      delete_opp_piece ();
       f <- new_f;
       r <- new_r;
       moves <- moves + 1
