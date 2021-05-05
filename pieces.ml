@@ -135,7 +135,7 @@ object (self)
     let end_fi, end_ra = coord_to_int coord in 
     let curr_fi, curr_ra = coord_to_int super#get_pos in 
 
-    let is_en_passant : bool = match R.last_move () with 
+    let is_en_passant : bool = match R.two_moves_ago () with 
     | None -> false
     | Some last_move ->
       begin
