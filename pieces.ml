@@ -172,10 +172,10 @@ object (self)
       super#make_move coord;
       let new_rank_int = rank_to_int new_r in 
       (* promotion. currently auto-queen. *)
-      if new_rank_int = 7 - (if super#get_color then 0 else 1) * 7 then
+      if new_rank_int = 7 - (if super#get_color then 0 else 1) * 7 && R.is_real_board () then
         begin
           R.deregister (self :> T.piece_type);
-          (* this functin gets called when a pawn promotes *)
+          (* this function gets called when a pawn promotes *)
           let promote (pawn : T.piece_type) =
             let (end_f, end_r) = coord_to_int pawn#get_pos in
             let c = pawn#get_color in

@@ -45,8 +45,26 @@ let run () =
 
     Viz.render () ;
 
+    if R.get_state () = Checkmate || R.get_state () = Stalemate then
+      (Viz.draw_board ();
+      Viz.draw_square G.green 7 9 cSQUARE_WIDTH cSQUARE_HEIGHT;
+      G.set_color G.black;
+      G.moveto (9 * cSQUARE_WIDTH + (cSQUARE_WIDTH / 2))
+       (7 * cSQUARE_HEIGHT + (cSQUARE_HEIGHT / 2));
+      G.draw_string "Exit";
+      let s = G.wait_next_event [G.Button_down] in
+      let x, y = s.mouse_x , s.mouse_y in
+      (* we clicked the quit button *)
+      if (x > 9 * cSQUARE_WIDTH) && 
+         (x < 10 * cSQUARE_WIDTH + cSQUARE_WIDTH) && 
+         (y > 7 * cSQUARE_HEIGHT) && 
+         (y < 8 * cSQUARE_HEIGHT) then
+        end_game := true
+      else
+        Viz.clicked_take_back (x, y));
+
     (* After each turn:
         - user presses 'q' to end game
         - any other key to continue *)
-    if not (Viz.move_on ()) then end_game := true
+    (* if not (Viz.move_on ()) then end_game := true *)
   done;;

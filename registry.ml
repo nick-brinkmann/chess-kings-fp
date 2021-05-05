@@ -49,7 +49,8 @@ type move_memory =
 mutable player : bool;
 mutable piece : piece_name;
 mutable start_square : coordinate;
-mutable end_square : coordinate
+mutable end_square : coordinate;
+mutable state : game_state
 }
 ;;
 
@@ -125,23 +126,35 @@ module type REGISTRY =
     (* because of quirk of storage, need access to this for en passant *)
     val two_moves_ago : unit -> move_memory option
 
+    (* checks if position is stalemate *)
     val check_stalemate : unit -> bool
 
+    (* checks if position is checkmate *)
     val checkmate_check : unit -> bool
+
+    (* sets the state of the game to one of Play, Check, Checkmate, or Stalemate *)
+    val set_state : game_state -> unit
+
+    (* gets current state of the game *)
+    val get_state : unit -> game_state
+
+    (* determines whether working on real registry or not *)
+    val is_real_board : unit -> bool
   end
 
+(* order function of Set*)
 let order_pieces (p1 : piece_type) (p2 : piece_type) = 
   if p1 == p2 then 0 else compare p1 p2 ;;
 
 module Registry : REGISTRY =
   struct
-    (* registrants -- An updatable set of all of the registered objects *)
+    (* registrants -- A set of all of the registered objects *)
     module Registrants =
       Set.Make (struct type t = piece_type
                        let compare = order_pieces
                 end) ;;
 
-    (* initialize registry of pieces to empty set *)
+    (* initialize set of pieces to empty set *)
     let registrants = ref Registrants.empty ;;
 
     let print_registry () : unit = 
@@ -166,6 +179,20 @@ module Registry : REGISTRY =
 
     (* whose_turn -- controls whose move it is *)
     let whose_turn = ref true ;;
+
+    (* initialize game state to play state *)
+    let state = ref Play ;;
+
+    let set_state (s : game_state) : unit =
+      state := s ;;
+    
+    let get_state () : game_state = !state;;
+
+    (* initialize real_board to true *)
+    let real_board = ref true ;;
+    
+    let is_real_board () = !real_board ;;
+    
 
     (* turn () : checks the number of moves that have been made thus far. If
                 even then it's white's turn, otherwise it's black's turn *)
@@ -257,6 +284,7 @@ module Registry : REGISTRY =
             piece = piece#name;
             start_square = piece#get_pos;
             end_square = coord;
+            state = !state
           }
         in 
         move_history := (Some to_add, copy_pieces ()) :: !move_history 
@@ -277,67 +305,45 @@ module Registry : REGISTRY =
       (* if no moves made yet, do nothing. otherwise take back a move. *)
       match !move_history with 
       | [] -> ()
-      | (_, position) :: tl ->
+      | (last_move, position) :: tl ->
         (
           registrants := Registrants.empty;
           update_position position;
           move_history := tl;
-          flip_turn ()
+          flip_turn ();
+          match last_move with 
+          | None -> ()
+          | Some move -> set_state move.state
         )
-      (* | Some _move_mem, piece_lst -> 
-        (
-          registrants := Registrants.empty;
-          update_position piece_lst;
-          move_history := List.tl !move_history;
-          flip_turn ()
-        ) *)
-      (* if !prev_positions = [] then
-        ()
-      else
-        (* Get the most recent previous position, empty current registry, 
-              and repopulate registry with pieces from previous position*)
-        (let prev_position = List.hd !prev_positions in
-        registrants := Registrants.empty;
-        let rec update_position (lst : piece_type list) : unit = 
-          match lst with 
-          | [] -> ()
-          | hd :: tl -> register hd; update_position tl 
-        in 
-        update_position prev_position;
-        (* Remove the head from the previous positions list *)
-        prev_positions := List.tl !prev_positions;
-        (* Set turn back to previous person's turn *)
-        flip_turn ())
-        *)
     ;;
 
+    (* filter pieces by color of player, returning a list. *)
     let subset (color : bool) : piece_type list = 
-      (* Filter the registrants, selecting only those of the specified color *)
       let s  = Registrants.filter (fun obj -> obj#get_color = color) !registrants in
-      (* return subset as a list rather than a set *)
       Registrants.elements s ;;
 
-    (* Finds piece on coordinate (if any), returns true if piece exists
+    (* finds piece on coordinate (if any), returns true if piece exists
           and is of opposite color to specified player *)
     let contains_enemy_piece (your_color : bool) (coord : coordinate) : bool = 
       match find_piece coord with 
       | None -> false 
       | Some piece -> piece#get_color <> your_color ;;
       
-    (* Finds piece on coordinate (if any), returns true if piece exists
+    (* finds piece on coordinate (if any), returns true if piece exists
         and is of same color to specified player *)
     let contains_own_piece (your_color : bool) (coord : coordinate) : bool = 
       match find_piece coord with 
       | None -> false 
       | Some piece -> piece#get_color = your_color ;;
 
+    (* determines whether a square contains a piece. *)
     let contains_any_piece (coord : coordinate) : bool = 
       match find_piece coord with 
       | None -> false 
       | Some _piece -> true ;;
 
     (* checks whether there's a piece along the given line or diagonal
-       EXCLUDING the starting square AND EXCLUDING the ending square *)
+       EXCLUDING the starting square AND EXCLUDING the ending square. *)
     let is_piece_along_line_from (start_coord : coordinate) 
                                  (end_coord : coordinate) : bool =
       (* turns into int representation *)
@@ -407,19 +413,25 @@ module Registry : REGISTRY =
     ;;
 
 
+    (* Checks all of current player's pieces to see if move exists.
+       This modifies the objects properties, so we copy registry
+       beforehand and reset it after all testing is done. *)
     let valid_moves_exist () : bool =
+      (* sets board to virtual board, so promotion is not triggered
+          when checking all possible moves *)
+      real_board := false;
       (* Copy of current registry *)
       let curr_registry = copy_pieces () in 
-      (* valid moves for a single piece *)
-      let valid_move = ref false in
-      let single_piece_valid_moves (piece : piece_type) : unit = 
+
+      (* checks if a single piece has any valid moves *)
+      let single_piece_valid_moves (piece : piece_type) : bool = 
         if piece#get_color <> !whose_turn then
-          ()
+          false
         else
           begin
-            let has_valid_move = ref false in
-            let i = ref 0 in
-            let j = ref 0 in
+            let has_valid_move = ref false in   (* used to break out of loop as soon as move is found *)
+            let i = ref 0 in                    (* iterates through possible files *)
+            let j = ref 0 in                    (* iterates through possible ranks *)
             (* iterate through all squares on chessboard, if any square is 
                 a valid move break out of loop *)
             while (not !has_valid_move) && (!i < 8) do
@@ -428,22 +440,35 @@ module Registry : REGISTRY =
                 j := !j + 1;
                 if piece#can_be_valid_move (f, r) then
                   (* make provisional move and verify that wouldn't put player in check *)
-                  (let prev = piece#get_pos in
+                  (* (let prev = piece#get_pos in *)
+                  (take_turn piece (f, r);
                   piece#make_move (f, r);
-                  if player_not_in_check !whose_turn then
+                  if player_not_in_check (not !whose_turn) then
                     (has_valid_move := true;
-                    valid_move := true);
-                  piece#make_move prev);
+                    
+                    if get_state ()= Check then 
+                      (Printf.printf "Thinks this gets out of check: \n");
+                    Printf.printf "%s %s \n" 
+                    (piece_name_to_string piece#name)
+                    (coord_to_string piece#get_pos));
+                  (* piece#make_move prev); *)
+                  take_back ());
               done;
               i := !i + 1;
               j := 0;
             done;
+            !has_valid_move;
           end
       in
-      Registrants.iter single_piece_valid_moves !registrants;
+      
+      (* check if any piece has a valid move *)
+      let exists_move = Registrants.exists single_piece_valid_moves !registrants in
+      (* resets registry to state before testing *)
       registrants := Registrants.empty;
       List.iter (fun obj -> register obj) curr_registry;
-      !valid_move
+      (* reset boolean so that promotion is once again considered for pawns *)
+      real_board := true;
+      exists_move
     ;;
 
     (* If the current player has no valid moves, and the king is currently 

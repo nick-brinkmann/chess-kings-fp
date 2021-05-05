@@ -4,6 +4,7 @@ type rank = R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 ;;
 type file = A | B | C | D | E | F | G | H ;;
 type coordinate = file * rank ;;
 type piece_name = Piece | Pawn | Knight | Bishop | Rook | Queen | King ;;
+type game_state = Play | Check | Checkmate | Stalemate ;;
 
 (* file_to_int f -- returns zero-indexed int *)
 let file_to_int (f : file) : int = 

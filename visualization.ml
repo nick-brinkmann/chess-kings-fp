@@ -22,8 +22,8 @@ let initialize () =
                   (cY_DIMENSION * cPIXELS_PER_BLOCK);
   (* turn off auto-synchronizing; we'll handle double buffer
       synchronization ourselves *)
-  G.set_window_title "Chess51";
-  G.auto_synchronize false;
+  G.set_window_title "C(hes)S51";
+  G.auto_synchronize false ;
   G.display_mode true ;;
 
 
@@ -52,8 +52,23 @@ let get_coords (x : int) (y : int) : coordinate =
   f, r
 ;;
   
-(* Draws the chess board *)
+
+
+(* Draws game window *)
 let draw_board () : unit =
+  
+  (* check state and draw accordingly *)
+  let x, y = 9, 5 in
+  (draw_square G.red y x cSQUARE_WIDTH cSQUARE_HEIGHT;
+  G.set_color G.black;
+  G.moveto (x * cSQUARE_WIDTH + (cSQUARE_WIDTH/2)) (y * cSQUARE_HEIGHT + (cSQUARE_HEIGHT / 2));
+  match R.get_state () with
+  | Play -> G.clear_graph ();                  
+  | Checkmate -> G.draw_string "Checkmate!"
+  | Check -> G.draw_string "Check!"
+  | Stalemate -> G.draw_string "Stalemate!");
+  
+  (* draw chess board *)
   G.set_line_width cLINEWIDTH;
   for x = 0 to 7 do
     for y = 0 to 7 do
@@ -61,7 +76,7 @@ let draw_board () : unit =
       else draw_square cBLACKCOLOR y x cSQUARE_WIDTH cSQUARE_HEIGHT
     done;
   done;
-
+  
   (* draw file coordinates *)
   G.set_color G.black;
   for f = 0 to 7 do
@@ -75,7 +90,7 @@ let draw_board () : unit =
     let ra = int_to_rank r in
     G.draw_string (rank_to_string ra);
   done;
-(* draw take back button *)
+  (* draw take back button *)
   let x, y = 9, 2 in
   draw_square cUNDO_BACKGROUND y x cSQUARE_WIDTH cSQUARE_HEIGHT;
   G.set_color cUNDO_TEXT_COLOR;
@@ -85,9 +100,20 @@ let draw_board () : unit =
   G.draw_string "Back";
   (* draw pieces on board *)
   R.get_pieces ()
-  |> List.iter (fun piece -> piece#draw) ;;
+  |> List.iter (fun piece -> piece#draw) 
+;;
 
 
+let clicked_take_back (x, y : int * int) : unit =
+  if (x > 9 * cSQUARE_WIDTH) && 
+     (x < 10 * cSQUARE_WIDTH + cSQUARE_WIDTH) && 
+     (y > 2 * cSQUARE_HEIGHT) && 
+     (y < 3 * cSQUARE_HEIGHT) then
+     (R.take_back ();
+     draw_board ())
+ else
+  ()
+;;
 
 
 (* take_turn : Waits for the execution of a move which involves:
@@ -119,9 +145,11 @@ let take_turn () =
         selected := None;
         G.clear_graph ();
         draw_board ();
-        G.moveto (cX_BOARDSIZE*cPIXELS_PER_BLOCK / 2) (cY_BOARDSIZE * cPIXELS_PER_BLOCK / 2);
         G.set_color G.magenta;
-        G.draw_string "You're in check!"))
+        G.moveto (8 * cSQUARE_WIDTH + (cSQUARE_WIDTH/2)) (4 * cSQUARE_HEIGHT + (cSQUARE_HEIGHT / 2));
+        G.draw_string "This move would";
+        G.moveto (8 * cSQUARE_WIDTH + (cSQUARE_WIDTH/2)) (4 * cSQUARE_HEIGHT + (cSQUARE_HEIGHT / 2) - 10);
+        G.draw_string "leave you in check!"))
   in
   
 
@@ -131,14 +159,7 @@ let take_turn () =
     let s = G.wait_next_event [G.Button_down] in
     let x, y = s.mouse_x, s.mouse_y in
     if x > (cX_BOARDSIZE * cPIXELS_PER_BLOCK) || y > (cY_BOARDSIZE * cPIXELS_PER_BLOCK) then
-      if (x > 9 * cSQUARE_WIDTH) && 
-         (x < 10 * cSQUARE_WIDTH + cSQUARE_WIDTH) && 
-         (y > 2 * cSQUARE_HEIGHT) && 
-         (y < 3 * cSQUARE_HEIGHT) then
-        (R.take_back ();
-        draw_board ())
-      else
-       ()
+      clicked_take_back (x, y)
     else
       (let (f, r)  = get_coords x y in
         let p = R.find_piece (f, r) in
@@ -180,30 +201,15 @@ let render () =
   draw_board ();
 
   take_turn ();
-  if R.checkmate_check () then
-    begin
-      let x, y = 9, 5 in
-      draw_square G.red y x cSQUARE_WIDTH cSQUARE_HEIGHT;
-      G.set_color G.black;
-      G.moveto (x * cSQUARE_WIDTH + (cSQUARE_WIDTH/2)) (y * cSQUARE_HEIGHT + (cSQUARE_HEIGHT / 2));
-      G.draw_string "Checkmate!"
-    end
-  else if R.check_stalemate () then
-    begin
-      let x, y = 9, 5 in
-      draw_square G.red y x cSQUARE_WIDTH cSQUARE_HEIGHT;
-      G.set_color G.black;
-      G.moveto (x * cSQUARE_WIDTH + (cSQUARE_WIDTH/2)) (y * cSQUARE_HEIGHT + (cSQUARE_HEIGHT / 2));
-      G.draw_string "Stalemate!"
-    end
-  else if not (R.player_not_in_check (R.turn ())) then
-    begin
-      let x, y = 9, 5 in
-      draw_square G.red y x cSQUARE_WIDTH cSQUARE_HEIGHT;
-      G.set_color G.black;
-      G.moveto (x * cSQUARE_WIDTH + (cSQUARE_WIDTH/2)) (y * cSQUARE_HEIGHT + (cSQUARE_HEIGHT / 2));
-      G.draw_string "Check!"
-    end;
 
-  G.synchronize ()
+  if R.checkmate_check () then
+    R.set_state Checkmate
+  else if R.check_stalemate () then
+    R.set_state Stalemate
+  else if not (R.player_not_in_check (R.turn ())) then
+    R.set_state Check
+  else if R.get_state () = Check then
+    R.set_state Play;
+
+
 ;;
