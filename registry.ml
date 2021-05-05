@@ -122,6 +122,9 @@ module type REGISTRY =
     (* returns the last move, if possible *)
     val last_move : unit -> move_memory option
 
+    (* because of quirk of storage, need access to this for en passant *)
+    val two_moves_ago : unit -> move_memory option
+
     val check_stalemate : unit -> bool
 
     val checkmate_check : unit -> bool
@@ -206,12 +209,22 @@ module Registry : REGISTRY =
 
 
     (* last_move () -- if there has been a last move (i.e. the game has started) 
-      returns the move. *)
+      returns the move. Because of a quirk of storage, the real last move is the 
+      hd of the tl of the list (2nd in the list). *)
     let last_move () : move_memory option = 
       match !move_history with 
       | [] -> None
-      | (move, _position) :: _tl -> move ;;
+      | (move, _position) :: _tl -> move
+      (* | [_elt] -> None
+      | (_move1, _position1) :: (move2, _position2) :: _tl -> move2 *)
+    ;;
 
+    let two_moves_ago () : move_memory option = 
+      match !move_history with 
+      | [] -> None 
+      | [_elt] -> None 
+      | (_move1, _pos1) :: (move2, _pos2) :: _tl -> move2 
+    ;;
 
     let find_piece coord : piece_type option = 
       (* filter piece registry by pieces on coord *)
@@ -231,7 +244,7 @@ module Registry : REGISTRY =
     ;;
 
 
-    let take_turn (piece : piece_type) (prev_coord : coordinate) : unit =
+    let take_turn (piece : piece_type) (going_to : coordinate) : unit =
       (* initializes move_history if empty *)
       (* if !move_history = [] then 
         move_history := [None, copy_pieces ()]; *)
@@ -241,13 +254,13 @@ module Registry : REGISTRY =
           {
             player = piece#get_color;
             piece = piece#name;
-            start_square = coord;
-            end_square = piece#get_pos;
+            start_square = piece#get_pos;
+            end_square = coord;
           }
         in 
         move_history := (Some to_add, copy_pieces ()) :: !move_history 
       in
-      add_move piece prev_coord;
+      add_move piece going_to;
       (* prev_positions := (copy_pieces ()) :: !prev_positions; *)
       flip_turn ()
     ;;
