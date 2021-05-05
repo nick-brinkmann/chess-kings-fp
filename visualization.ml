@@ -195,6 +195,14 @@ let render () =
       G.set_color G.black;
       G.moveto (x * cSQUARE_WIDTH + (cSQUARE_WIDTH/2)) (y * cSQUARE_HEIGHT + (cSQUARE_HEIGHT / 2));
       G.draw_string "Stalemate!"
+    end
+  else if not (R.player_not_in_check (R.turn ())) then
+    begin
+      let x, y = 9, 5 in
+      draw_square G.red y x cSQUARE_WIDTH cSQUARE_HEIGHT;
+      G.set_color G.black;
+      G.moveto (x * cSQUARE_WIDTH + (cSQUARE_WIDTH/2)) (y * cSQUARE_HEIGHT + (cSQUARE_HEIGHT / 2));
+      G.draw_string "Check!"
     end;
 
   G.synchronize ()
