@@ -95,7 +95,8 @@ let draw_board () : unit =
         - selecting a valid square to which you move selected piece *)
 let take_turn () =
   let moved = ref false in
-
+  let selected : T.piece_type option ref = ref None in
+  
   let move_piece (piece : T.piece_type) (f, r : coordinate) = 
     (* If piece is allowed to move to this square executes
         move; otherwise alerts user of invalid move *)
@@ -117,12 +118,14 @@ let take_turn () =
         (R.take_back ();
         G.clear_graph ();
         draw_board ();
+        (* highlight_square piece#get_pos;
+        Printf.printf "%s is at %s \n" piece#name (coord_to_string piece#get_pos);  *)
+        selected := None;
         G.moveto (cX_BOARDSIZE*cPIXELS_PER_BLOCK / 2) (cY_BOARDSIZE * cPIXELS_PER_BLOCK / 2);
         G.set_color G.magenta;
         G.draw_string "You're in check!"))
   in
   
-  let selected : T.piece_type option ref = ref None in
 
   (* Continously poll for clicks until a 
         piece has been moved *)
