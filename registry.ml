@@ -29,7 +29,7 @@ class type piece_type =
 
     method draw : unit
 
-    method name : string
+    method name : piece_name
 
     method get_color : bool
 
@@ -47,7 +47,7 @@ class type piece_type =
 type move_memory = 
 {
 mutable player : bool;
-mutable piece : string;
+mutable piece : piece_name;
 mutable start_square : coordinate;
 mutable end_square : coordinate
 }
@@ -155,7 +155,7 @@ module Registry : REGISTRY =
         | hd :: tl -> 
           Printf.printf "%s %s %s \n" 
           (color_to_string hd#get_color) 
-          hd#name 
+          (piece_name_to_string hd#name)
           (coord_to_string hd#get_pos);
           print_list tl
       in
@@ -193,7 +193,8 @@ module Registry : REGISTRY =
     (*  deregister obj : updates registry by removing a piece, alerts user if
                         attempting to remove piece not in registry *)
     let deregister (obj : piece_type) : unit =
-      Printf.printf "Deregistering %s at %s now \n" obj#name (coord_to_string obj#get_pos);
+      Printf.printf "Deregistering %s at %s now \n" 
+      (piece_name_to_string obj#name) (coord_to_string obj#get_pos);
       let new_registrants = Registrants.remove obj !registrants in
       if new_registrants == !registrants then
         (* no obj removed; as of v4.03, physical equality guaranteed *)
@@ -425,8 +426,6 @@ module Registry : REGISTRY =
               while (not !has_valid_move) && (!j < 8) do
                 let (f, r) = int_to_coord (!i, !j) in
                 j := !j + 1;
-                (* Printf.printf "%s \n" (coord_to_string (f, r)); *)
-                (* Check if piece would be able to move that way *)
                 if piece#can_be_valid_move (f, r) then
                   (* make provisional move and verify that wouldn't put player in check *)
                   (let prev = piece#get_pos in

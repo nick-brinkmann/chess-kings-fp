@@ -116,11 +116,9 @@ let take_turn () =
         moved := true)
       else
         (R.take_back ();
+        selected := None;
         G.clear_graph ();
         draw_board ();
-        (* highlight_square piece#get_pos;
-        Printf.printf "%s is at %s \n" piece#name (coord_to_string piece#get_pos);  *)
-        selected := None;
         G.moveto (cX_BOARDSIZE*cPIXELS_PER_BLOCK / 2) (cY_BOARDSIZE * cPIXELS_PER_BLOCK / 2);
         G.set_color G.magenta;
         G.draw_string "You're in check!"))
@@ -182,7 +180,7 @@ let render () =
   draw_board ();
 
   take_turn ();
-  (* if R.checkmate_check () then
+  if R.checkmate_check () then
     begin
       let x, y = 9, 5 in
       draw_square G.red y x cSQUARE_WIDTH cSQUARE_HEIGHT;
@@ -197,9 +195,7 @@ let render () =
       G.set_color G.black;
       G.moveto (x * cSQUARE_WIDTH + (cSQUARE_WIDTH/2)) (y * cSQUARE_HEIGHT + (cSQUARE_HEIGHT / 2));
       G.draw_string "Stalemate!"
-    end; *)
+    end;
 
-  G.clear_graph ();
-  draw_board ();
   G.synchronize ()
 ;;

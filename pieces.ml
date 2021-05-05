@@ -17,7 +17,7 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
     val mutable r : rank = initrank
     val mutable moves : int = 0
     
-    method name : string = "piece"
+    method name : piece_name = Piece
     
     (* method player_color : bool = player *)
     val color = if p then cWHITE_PIECE_COLOR else cBLACK_PIECE_COLOR
@@ -43,10 +43,7 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
         | None -> () 
         | Some piece -> 
           (if piece#get_color = self#get_color then 
-            (Printf.printf "attempted to move %s onto %s (%s -> %s) \n" self#name piece#name 
-                                          (coord_to_string self#get_pos)
-                                          (coord_to_string coord);
-            raise (Invalid_argument "make_move: trying to move onto own piece"))
+            raise (Invalid_argument "make_move: trying to move onto own piece")
           else R.deregister piece)
       in
       (* R.take_turn is called only in Visualization. *)
@@ -79,7 +76,8 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
       let (f, r) = self#get_pos in
       let x = (cSQUARE_WIDTH * (file_to_int f) + (7 * cSQUARE_WIDTH / 16)) in
       let y = cSQUARE_HEIGHT * (rank_to_int r) + (7 * cSQUARE_HEIGHT / 16) in
-      G.moveto x y
+      G.moveto x y;
+      G.draw_string (piece_name_to_string self#name)
 
   end;;
 
@@ -90,7 +88,7 @@ object (self)
                 player
            as super
 
-  method! name : string = "pawn"
+  method! name : piece_name = Pawn
 
   method! can_be_valid_move (end_file, end_rank as coord: coordinate) : bool = 
     let end_fi, end_ra = coord_to_int coord in
@@ -114,7 +112,7 @@ object (self)
       match R.last_move () with
       | None -> false 
       | Some last_move ->
-    last_move.player <> self#get_color && last_move.piece = "pawn" &&
+    last_move.player <> self#get_color && last_move.piece = Pawn &&
     (fst last_move.end_square) = end_file && 
     (rank_to_int (snd last_move.end_square)) = curr_ra &&
     end_rank = (if self#get_color then R6 else R3) &&
@@ -143,7 +141,7 @@ object (self)
         (coord_to_string (last_move.start_square)) 
         (coord_to_string (last_move.end_square)); *)
         let thinks_ep_is : bool =
-        last_move.player <> self#get_color && last_move.piece = "pawn" &&
+        last_move.player <> self#get_color && last_move.piece = Pawn &&
         (fst last_move.end_square) = new_f && 
         (rank_to_int (snd last_move.end_square)) = curr_ra &&
         new_r = (if self#get_color then R6 else R3) &&
@@ -247,10 +245,6 @@ object (self)
           promote (self :> T.piece_type);
         end
 
-  method! draw : unit = 
-    super#draw;
-    G.draw_string "Pawn"
-      
 end 
 
 and (* class *) rook (initfile : file) (initrank : rank) (player : bool) =
@@ -260,7 +254,7 @@ object
                 player 
           as super
 
-  method! name : string = "rook"
+  method! name : piece_name = Rook
 
   method! can_be_valid_move (end_file, end_rank as coord : coordinate) : bool =
     (* ensures exactly one of rank and file is unchanged *)
@@ -274,10 +268,6 @@ object
     (not (R.is_piece_along_line_from coord super#get_pos)) && 
     (not (R.contains_own_piece super#get_color coord))
 
-   method! draw : unit = 
-      super#draw;
-      G.draw_string "Rook"
-
 end
 
 and (* class *) knight (initfile : file) (initrank : rank) (player : bool) =
@@ -287,7 +277,7 @@ object
   player 
   as super
 
-  method! name : string = "knight"
+  method! name : piece_name = Knight
 
   method! can_be_valid_move (coord : coordinate) : bool =
     let curr_file, curr_rank = coord_to_int super#get_pos in 
@@ -300,10 +290,6 @@ object
     (* ensures no friendly piece at ending square *)
     (not (R.contains_own_piece super#get_color coord))
 
-
-  method! draw : unit = 
-   super#draw;
-    G.draw_string "Knight"
 end
 
 and (* class *) bishop (initfile : file) (initrank : rank) (player : bool) =
@@ -313,7 +299,7 @@ object
   player 
   as super
 
-  method! name : string = "bishop"
+  method! name : piece_name = Bishop
 
   method! can_be_valid_move (coord : coordinate) : bool =
     (* convert to integer representation *)
@@ -328,11 +314,6 @@ object
     (not (R.is_piece_along_line_from super#get_pos coord)) &&
     (* no friendly piece at ending square *)
     (not (R.contains_own_piece super#get_color coord))
-
-
-  method! draw : unit = 
-   super#draw;
-    G.draw_string "Bishop"
 end
 
 and (* class *)  queen (initfile : file) (initrank : rank) (player : bool) =
@@ -342,7 +323,7 @@ object(self)
   player 
   as super
 
-  method! name : string = "queen"
+  method! name : piece_name = Queen
 
   method! can_be_valid_move (coord : coordinate) : bool =
     (* Registers a new bishop and rook at the same starting square. If either 
@@ -351,10 +332,6 @@ object(self)
     let new_bishop = (new bishop (fst super#get_pos) (snd super#get_pos) self#get_color) in 
     (new_rook#can_be_valid_move coord) || (new_bishop#can_be_valid_move coord)
 
-
-  method! draw : unit = 
-   super#draw;
-    G.draw_string "Queen"
 end
 
 and (* class *) king (initfile : file) (initrank : rank) (player : bool) =
@@ -364,7 +341,7 @@ object(self)
   player
   as super
 
-  method! name : string = "king"
+  method! name : piece_name = King
 
   method! is_king = true
 
@@ -378,10 +355,10 @@ object(self)
        pawns, which are counted as legal moves for pawns but don't put the king 
       in check *)
     let opp_pawns : T.piece_type list =
-      List.filter (fun obj -> obj#name = "pawn") all_opp_pieces 
+      List.filter (fun obj -> obj#name = Pawn) all_opp_pieces 
     in  
     let opp_other_pieces : T.piece_type list = 
-      List.filter (fun obj -> (not obj#is_king) && (not (obj#name = "pawn"))) 
+      List.filter (fun obj -> (not obj#is_king) && (not (obj#name = Pawn))) 
       all_opp_pieces 
     in 
     let pieces_dont_attack (coord : coordinate) : bool = 
@@ -405,7 +382,7 @@ object(self)
         match R.find_piece (H, starting_rank) with 
         | None -> false 
         | Some piece -> 
-          (piece#name = "rook") && (piece#get_moves = 0)
+          (piece#name = Rook) && (piece#get_moves = 0)
       in
       (new_f = 6) && (new_r = 7 - (if super#get_color then 7 else 0)) &&
       (super#get_moves = 0) && (h_rook_not_moved) && 
@@ -419,7 +396,7 @@ object(self)
         match R.find_piece (A, starting_rank) with 
         | None -> false 
         | Some piece -> 
-          (piece#name = "rook") && (piece#get_moves = 0)
+          (piece#name = Rook) && (piece#get_moves = 0)
       in
       (new_f = 2) && (new_r = 7 - (if super#get_color then 7 else 0)) &&
       (super#get_moves = 0) && (a_rook_not_moved) && 
@@ -482,24 +459,6 @@ object(self)
     ;
     super#make_move coord
 
-
-  method! draw : unit = 
-   super#draw;
-    G.draw_string "King"
 end 
 
 ;;
-
-(* let rec print_opp_pieces lst =
-  match lst with 
-  | [] -> ()
-  | obj :: tl -> 
-    (let file = file_to_string (fst obj#get_pos) in 
-      let rank = rank_to_string (snd obj#get_pos) in 
-      Printf.printf "File: %s" file;
-      Printf.printf "Rank: %s" rank;
-      Printf.printf "\n";
-      print_opp_pieces tl
-    )
-in *)
-(* print_opp_pieces opponent_pieces; *)

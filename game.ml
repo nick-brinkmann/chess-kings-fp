@@ -3,6 +3,7 @@
 type rank = R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 ;;
 type file = A | B | C | D | E | F | G | H ;;
 type coordinate = file * rank ;;
+type piece_name = Piece | Pawn | Knight | Bishop | Rook | Queen | King ;;
 
 (* file_to_int f -- returns zero-indexed int *)
 let file_to_int (f : file) : int = 
@@ -85,3 +86,14 @@ let coord_to_string (f, r : coordinate) : string =
 
 let is_on_board (x, y : int * int) : bool = 
   x >= 0 && x <= 7 && y >= 0 && y <= 7 ;;
+
+let piece_name_to_string (p : piece_name) : string = 
+  match p with 
+  | Piece -> "Piece"
+  | Pawn -> "Pawn"
+  | Knight -> "Knight"
+  | Bishop -> "Bishop"
+  | Rook -> "Rook"
+  | Queen -> "Queen"
+  | King -> "King"
+;;
