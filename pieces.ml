@@ -61,8 +61,10 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
       (coord_to_string self#get_pos) *)
 
     (* checks whether a piece can move to a coordinate. False by default. *)
-    method can_be_valid_move (_c : coordinate) : bool = 
-      false
+    method can_be_valid_move (_c : coordinate) : bool = false
+
+    (* only really used for pawns. false by default. *)
+    method attacks_square (_coord : coordinate) : bool = false
 
     method chebyshev_distance_to (end_coord : coordinate) : int = 
       let start_x, start_y = coord_to_int self#get_pos in 
@@ -118,6 +120,14 @@ object (self)
     end_rank = (if self#get_color then R6 else R3) &&
     abs (end_fi - curr_fi) = 1 &&
     (snd last_move.start_square) = (if last_move.player then R2 else R7)
+
+  method! attacks_square (coord : coordinate) : bool = 
+    let end_fi, end_ra = coord_to_int coord in
+    let curr_fi, curr_ra = coord_to_int super#get_pos in 
+    (end_ra - curr_ra = (if player then 1 else ~-1)) && 
+    abs (end_fi - curr_fi) = 1 
+    
+
 
   (* promotion, en passant *)
   method! make_move ((new_f, new_r) as coord : coordinate) : unit = 
@@ -382,7 +392,7 @@ object(self)
       (* either pawns cannot move to the square, OR the square is on the same
         file as the pawn, i.e. the pawn does not threaten the square. *)
       (fun obj -> 
-        not (obj#can_be_valid_move coord) || 
+        not (obj#attacks_square coord) || 
         (fst coord) = (fst obj#get_pos)) 
       opp_pawns
     in

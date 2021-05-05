@@ -37,6 +37,8 @@ class type piece_type =
 
     method can_be_valid_move : coordinate -> bool
 
+    method attacks_square : coordinate -> bool
+
     method chebyshev_distance_to : coordinate -> int
 
   end ;;
