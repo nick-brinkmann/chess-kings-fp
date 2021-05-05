@@ -76,7 +76,7 @@ let draw_board () : unit =
     G.draw_string (rank_to_string ra);
   done;
 (* draw take back button *)
-  let x, y = 9, 4 in
+  let x, y = 9, 2 in
   draw_square cUNDO_BACKGROUND y x cSQUARE_WIDTH cSQUARE_HEIGHT;
   G.set_color cUNDO_TEXT_COLOR;
   G.moveto ((x * cSQUARE_WIDTH) + (cSQUARE_WIDTH / 2)) ((y*cSQUARE_HEIGHT) + (cSQUARE_HEIGHT / 2));
@@ -105,8 +105,10 @@ let take_turn () =
       (G.set_color G.red;
       G.draw_string "Cannot move here")
     else
-      (R.take_turn piece (f, r);
+      (* (let started_at : coordinate = piece#get_pos in *)
+      (R.take_turn piece (f,r);
       piece#make_move (f, r);
+      (* piece#make_move (f, r); *)
       if R.player_not_in_check piece#get_color then
         (G.clear_graph ();
         draw_board ();
@@ -130,8 +132,8 @@ let take_turn () =
     if x > (cX_BOARDSIZE * cPIXELS_PER_BLOCK) || y > (cY_BOARDSIZE * cPIXELS_PER_BLOCK) then
       if (x > 9 * cSQUARE_WIDTH) && 
          (x < 10 * cSQUARE_WIDTH + cSQUARE_WIDTH) && 
-         (y > 4 * cSQUARE_HEIGHT) && 
-         (y < 5 * cSQUARE_HEIGHT) then
+         (y > 2 * cSQUARE_HEIGHT) && 
+         (y < 3 * cSQUARE_HEIGHT) then
         (R.take_back ();
         draw_board ())
       else
@@ -176,24 +178,25 @@ let render () =
   G.clear_graph ();
   draw_board ();
 
-  (* At this point we need functions for logic of game
-      -- Await move = wait for some type of input
-                      whether a click, string, etc.
-      -- Make move = when a valid input is given check
-                    that move can be made and then 
-                    modify piece value or not *)
-
   take_turn ();
-  if R.checkmate_check () then
+  (* if R.checkmate_check () then
     begin
-      G.moveto (cX_BOARDSIZE * cPIXELS_PER_BLOCK / 2) (cY_BOARDSIZE * cPIXELS_PER_BLOCK / 2);
-      G.set_color G.magenta;
+      let x, y = 9, 5 in
+      draw_square G.red y x cSQUARE_WIDTH cSQUARE_HEIGHT;
+      G.set_color G.black;
+      G.moveto (x * cSQUARE_WIDTH + (cSQUARE_WIDTH/2)) (y * cSQUARE_HEIGHT + (cSQUARE_HEIGHT / 2));
       G.draw_string "Checkmate!"
     end
   else if R.check_stalemate () then
-    (G.moveto (cX_BOARDSIZE * cPIXELS_PER_BLOCK / 2) (cY_BOARDSIZE * cPIXELS_PER_BLOCK / 2);
-    G.set_color G.magenta;
-    G.draw_string "Stalemate!");
+    begin
+      let x, y = 9, 5 in
+      draw_square G.red y x cSQUARE_WIDTH cSQUARE_HEIGHT;
+      G.set_color G.black;
+      G.moveto (x * cSQUARE_WIDTH + (cSQUARE_WIDTH/2)) (y * cSQUARE_HEIGHT + (cSQUARE_HEIGHT / 2));
+      G.draw_string "Stalemate!"
+    end; *)
 
+  G.clear_graph ();
+  draw_board ();
   G.synchronize ()
 ;;

@@ -166,20 +166,29 @@ module Registry : REGISTRY =
                 even then it's white's turn, otherwise it's black's turn *)
     let turn () =
       !whose_turn ;;
+      
+      let flip_turn () = 
+        whose_turn := not !whose_turn ;;
+        
+        (* let prev_positions = ref [] ;; *)
 
-    let flip_turn () = 
-      whose_turn := not !whose_turn ;;
-
-    (* let prev_positions = ref [] ;; *)
-
+    (* move history stores a list of:
+      - moves (player, piece, start and end square) 
+      - the positions that those moves result in, 
+          stored as the registry in list form.
+      Initialized as the empty list.
+    *)
+    let move_history : (move_memory option * (piece_type list)) list ref = 
+      ref [] ;;
+        
     (* register obj : updates the registry by adding a new piece *)
     let register (obj : piece_type) : unit =
-      registrants := (Registrants.add obj !registrants);;
+      registrants := (Registrants.add obj !registrants) ;;
 
     (*  deregister obj : updates registry by removing a piece, alerts user if
                         attempting to remove piece not in registry *)
     let deregister (obj : piece_type) : unit =
-      Printf.printf "Deregistering now \n";
+      Printf.printf "Deregistering %s at %s now \n" obj#name (coord_to_string obj#get_pos);
       let new_registrants = Registrants.remove obj !registrants in
       if new_registrants == !registrants then
         (* no obj removed; as of v4.03, physical equality guaranteed *)
@@ -193,21 +202,13 @@ module Registry : REGISTRY =
     (* get_pieces () : Returns a list of the pieces in the registry *)
     let get_pieces () = Registrants.elements !registrants ;;
 
-    (* move history stores a list of:
-      - moves (player, piece, start and end square) 
-      - the positions that those moves result in, 
-          stored as the registry in list form.
-      Initialized as the empty list.
-    *)
-    let move_history : (move_memory * (piece_type list)) list ref = 
-      ref [] ;;
 
     (* last_move () -- if there has been a last move (i.e. the game has started) 
       returns the move. *)
     let last_move () : move_memory option = 
       match !move_history with 
       | [] -> None
-      | (move, _position) :: _tl -> Some move ;;
+      | (move, _position) :: _tl -> move ;;
 
 
     let find_piece coord : piece_type option = 
@@ -228,22 +229,25 @@ module Registry : REGISTRY =
     ;;
 
 
-    let take_turn (piece : piece_type) (coord : coordinate) : unit =
+    let take_turn (piece : piece_type) (prev_coord : coordinate) : unit =
+      (* initializes move_history if empty *)
+      (* if !move_history = [] then 
+        move_history := [None, copy_pieces ()]; *)
       (* adds a move to the move history. *)
       let add_move (piece : piece_type) (coord : coordinate) : unit = 
         let to_add : move_memory = 
           {
             player = piece#get_color;
             piece = piece#name;
-            start_square = piece#get_pos;
-            end_square = coord;
+            start_square = coord;
+            end_square = piece#get_pos;
           }
         in 
-        move_history := (to_add, copy_pieces ()) :: !move_history in
-      
-      add_move piece coord;
+        move_history := (Some to_add, copy_pieces ()) :: !move_history 
+      in
+      add_move piece prev_coord;
       (* prev_positions := (copy_pieces ()) :: !prev_positions; *)
-      flip_turn () 
+      flip_turn ()
     ;;
 
     (* take_back () -- takes back the last move, if possible. *)
@@ -405,31 +409,26 @@ module Registry : REGISTRY =
             while (not !has_valid_move) && (!i < 8) do
               while (not !has_valid_move) && (!j < 8) do
                 let (f, r) = int_to_coord (!i, !j) in
+                j := !j + 1;
+                (* Printf.printf "%s \n" (coord_to_string (f, r)); *)
                 (* Check if piece would be able to move that way *)
                 if piece#can_be_valid_move (f, r) then
                   (* make provisional move and verify that wouldn't put player in check *)
-                  (* (take_turn piece (f, r); *)
                   (let prev = piece#get_pos in
                   piece#make_move (f, r);
-                  (* Printf.printf "%s %s-%s \n" piece#name (coord_to_string prev) (coord_to_string piece#get_pos); *)
                   if player_not_in_check !whose_turn then
                     (has_valid_move := true;
-                    valid_move := true;
-                    Printf.printf "valid move exists \n");
-                  Printf.printf "Moving piece at %s back\n" (coord_to_string piece#get_pos);
+                    valid_move := true);
                   piece#make_move prev);
-                j := !j + 1;
               done;
               i := !i + 1;
+              j := 0;
             done;
-            if not !has_valid_move then Printf.printf "no valid move found \n"
           end
       in
       Registrants.iter single_piece_valid_moves !registrants;
       registrants := Registrants.empty;
       List.iter (fun obj -> register obj) curr_registry;
-      let returning = (if !valid_move then 1 else 0) in
-      Printf.printf "Returned %d \n" returning;
       !valid_move
     ;;
 

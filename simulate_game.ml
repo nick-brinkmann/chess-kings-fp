@@ -44,7 +44,9 @@ let run () =
   while not !end_game do
 
     Viz.render () ;
-    (* R.print_registry () ; *)
 
+    (* After each turn:
+        - user presses 'q' to end game
+        - any other key to continue *)
     if not (Viz.move_on ()) then end_game := true
   done;;

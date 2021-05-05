@@ -51,19 +51,23 @@ class piece (initfile : file) (initrank : rank) (p : bool) =
       in
       (* R.take_turn is called only in Visualization. *)
       delete_opp_piece ();
+      (* let old_pos = self#get_pos in *)
       f <- new_f;
       r <- new_r;
       moves <- moves + 1
       (*debugging purposes*)
-      (* Printf.printf "%s %s-%s \n" last_move.piece 
-      (coord_to_string last_move.start_square) 
-      (coord_to_string last_move.end_square) *)
+      (* Printf.printf "%s %s-%s has been played\n" self#name 
+      (coord_to_string old_pos) 
+      (coord_to_string self#get_pos) *)
 
     (* checks whether a piece can move to a coordinate. False by default. *)
     method can_be_valid_move (_c : coordinate) : bool = 
       false
 
-    method chebyshev_distance_to (_c : coordinate) : int = ~-1
+    method chebyshev_distance_to (end_coord : coordinate) : int = 
+      let start_x, start_y = coord_to_int self#get_pos in 
+      let end_x, end_y = coord_to_int end_coord in 
+      max (abs (start_x - end_x)) (abs (start_y - end_y))
 
     (* draw -- does all logic of setting correct color and moving to correct location
                 for drawing a piece. Then, in subclass, we call this method and then
@@ -86,7 +90,7 @@ object (self)
 
   method! name : string = "pawn"
 
-  method! can_be_valid_move (end_file, _end_rank as coord: coordinate) : bool = 
+  method! can_be_valid_move (end_file, end_rank as coord: coordinate) : bool = 
     let end_fi, end_ra = coord_to_int coord in
     let curr_fi, curr_ra = coord_to_int super#get_pos in 
     let is_at_starting_square = (moves = 0) in 
@@ -111,6 +115,7 @@ object (self)
     last_move.player <> self#get_color && last_move.piece = "pawn" &&
     (fst last_move.end_square) = end_file && 
     (rank_to_int (snd last_move.end_square)) = curr_ra &&
+    end_rank = (if self#get_color then R6 else R3) &&
     abs (end_fi - curr_fi) = 1 &&
     (snd last_move.start_square) = (if last_move.player then R2 else R7)
 
@@ -120,102 +125,117 @@ object (self)
     let end_fi, end_ra = coord_to_int coord in 
     let curr_fi, curr_ra = coord_to_int super#get_pos in 
 
-    let en_passant_possible : bool = match R.last_move () with 
+    let is_en_passant : bool = match R.last_move () with 
     | None -> false
     | Some last_move ->
-      last_move.player <> self#get_color && last_move.piece = "pawn" &&
-      (fst last_move.end_square) = new_f && 
-      (rank_to_int (snd last_move.end_square)) = curr_ra &&
-      abs (end_fi - curr_fi) = 1 &&
-      (snd last_move.start_square) = (if last_move.player then R2 else R7)
+      begin
+        Printf.printf "Last move was %s to %s \n" 
+        (coord_to_string (last_move.start_square)) 
+        (coord_to_string (last_move.end_square));
+        let thinks_ep_is : bool =
+        last_move.player <> self#get_color && last_move.piece = "pawn" &&
+        (fst last_move.end_square) = new_f && 
+        (rank_to_int (snd last_move.end_square)) = curr_ra &&
+        new_r = (if self#get_color then R6 else R3) &&
+        abs (end_fi - curr_fi) = 1 &&
+        (snd last_move.start_square) = (if last_move.player then R2 else R7) in 
+        Printf.printf "Thinks en passant is %b \n" thinks_ep_is;
+        Printf.printf "new_r is %s \n" (rank_to_string new_r);
+        thinks_ep_is
+      end
     in
 
     (* execute en passant*)
-    if en_passant_possible then
+    if is_en_passant then
       begin
-        super#make_move coord;
+        (* let Some last_move = R.last_move () in
+        Printf.printf "Last move: %s-%s \n"
+        (coord_to_string (last_move.start_square)) 
+        (coord_to_string (last_move.end_square)); *)
+        (* super#make_move coord; *)
         match R.find_piece 
         (new_f, int_to_rank (end_ra + (if super#get_color then -1 else 1))) with 
         | None -> raise (Invalid_argument "en passant error")
-        | Some opp_pawn -> R.deregister opp_pawn
+        | Some opp_pawn -> R.deregister opp_pawn;
+        super#make_move coord
       end
     else
-    (* not en passant *)
-    super#make_move coord;
-    let new_rank_int = rank_to_int new_r in 
-    (* promotion. currently auto-queen. *)
-    if new_rank_int = 7 - (if super#get_color then 0 else 1) * 7 then
-      begin
-        R.deregister (self :> T.piece_type);
-        (* this functin gets called when a pawn promotes *)
-        let promote (pawn : T.piece_type) =
-          let (end_f, end_r) = coord_to_int pawn#get_pos in
-          let c = pawn#get_color in
-          let direction = (if c then -1 else 1) in
-          (* draw queen option *)
-          Viz.draw_square cPROMOTE_COLOR (end_r + (direction * 1)) end_f cSQUARE_WIDTH cSQUARE_HEIGHT;
-          G.moveto (end_f * cSQUARE_WIDTH + (cSQUARE_WIDTH / 2)) 
-                  ((end_r + (direction * 1))*cSQUARE_HEIGHT + (cSQUARE_HEIGHT / 2));
-          G.set_color G.black;
-          G.draw_string "Queen";
+      (* not en passant *)
+      super#make_move coord;
+      let new_rank_int = rank_to_int new_r in 
+      (* promotion. currently auto-queen. *)
+      if new_rank_int = 7 - (if super#get_color then 0 else 1) * 7 then
+        begin
+          R.deregister (self :> T.piece_type);
+          (* this functin gets called when a pawn promotes *)
+          let promote (pawn : T.piece_type) =
+            let (end_f, end_r) = coord_to_int pawn#get_pos in
+            let c = pawn#get_color in
+            let direction = (if c then -1 else 1) in
+            (* draw queen option *)
+            Viz.draw_square cPROMOTE_COLOR (end_r + (direction * 1)) end_f cSQUARE_WIDTH cSQUARE_HEIGHT;
+            G.moveto (end_f * cSQUARE_WIDTH + (cSQUARE_WIDTH / 2)) 
+                    ((end_r + (direction * 1))*cSQUARE_HEIGHT + (cSQUARE_HEIGHT / 2));
+            G.set_color G.black;
+            G.draw_string "Queen";
 
-          (* draw rook option *)
-          Viz.draw_square cPROMOTE_COLOR (end_r + (direction * 2)) end_f cSQUARE_WIDTH cSQUARE_HEIGHT;
-          G.moveto (end_f * cSQUARE_WIDTH + (cSQUARE_WIDTH / 2)) 
-                  ((end_r + (direction * 2))*cSQUARE_HEIGHT + (cSQUARE_HEIGHT / 2));
-          G.set_color G.black;
-          G.draw_string "Rook";
-          
-          (* draw bishop option *)
-          Viz.draw_square cPROMOTE_COLOR (end_r + (direction * 3)) end_f cSQUARE_WIDTH cSQUARE_HEIGHT;
-          G.moveto (end_f * cSQUARE_WIDTH + (cSQUARE_WIDTH / 2)) 
-                  ((end_r + (direction * 3))*cSQUARE_HEIGHT + (cSQUARE_HEIGHT / 2));
-          G.set_color G.black;
-          G.draw_string "Bishop";
+            (* draw rook option *)
+            Viz.draw_square cPROMOTE_COLOR (end_r + (direction * 2)) end_f cSQUARE_WIDTH cSQUARE_HEIGHT;
+            G.moveto (end_f * cSQUARE_WIDTH + (cSQUARE_WIDTH / 2)) 
+                    ((end_r + (direction * 2))*cSQUARE_HEIGHT + (cSQUARE_HEIGHT / 2));
+            G.set_color G.black;
+            G.draw_string "Rook";
+            
+            (* draw bishop option *)
+            Viz.draw_square cPROMOTE_COLOR (end_r + (direction * 3)) end_f cSQUARE_WIDTH cSQUARE_HEIGHT;
+            G.moveto (end_f * cSQUARE_WIDTH + (cSQUARE_WIDTH / 2)) 
+                    ((end_r + (direction * 3))*cSQUARE_HEIGHT + (cSQUARE_HEIGHT / 2));
+            G.set_color G.black;
+            G.draw_string "Bishop";
 
-          (* draw knight option *)
-          Viz.draw_square cPROMOTE_COLOR (end_r + (direction * 4)) end_f cSQUARE_WIDTH cSQUARE_HEIGHT;
-          G.moveto (end_f * cSQUARE_WIDTH + (cSQUARE_WIDTH / 2)) 
-                  ((end_r + (direction * 4))*cSQUARE_HEIGHT + (cSQUARE_HEIGHT / 2));
-          G.set_color G.black;
-          G.draw_string "Knight";
+            (* draw knight option *)
+            Viz.draw_square cPROMOTE_COLOR (end_r + (direction * 4)) end_f cSQUARE_WIDTH cSQUARE_HEIGHT;
+            G.moveto (end_f * cSQUARE_WIDTH + (cSQUARE_WIDTH / 2)) 
+                    ((end_r + (direction * 4))*cSQUARE_HEIGHT + (cSQUARE_HEIGHT / 2));
+            G.set_color G.black;
+            G.draw_string "Knight";
 
-          let rec choose_piece () = 
-            let s = G.wait_next_event [G.Button_down] in
-            let x, y = s.mouse_x / cSQUARE_WIDTH, s.mouse_y / cSQUARE_HEIGHT in
-            if x <> end_f then
-              choose_piece ()
-            else
-              begin
-                (* chose queen *)
-                if y = end_r + (direction*1) then
-                  R.register ((new queen 
-                                   (int_to_file end_f)
-                                   (int_to_rank end_r) c) :> T.piece_type)
-                (* chose rook *)
-                else if y = end_r + (direction*2) then
-                  R.register ((new rook 
-                                   (int_to_file end_f)
-                                   (int_to_rank end_r) c) :> T.piece_type)
-                (* chose bishop *)
-                else if y = end_r + (direction*3) then
-                  R.register ((new bishop 
-                                   (int_to_file end_f)
-                                   (int_to_rank end_r) c) :> T.piece_type)
-                (* chose knight *)
-                else if y = end_r + (direction*4) then
-                  R.register ((new knight 
-                                   (int_to_file end_f)
-                                   (int_to_rank end_r) c) :> T.piece_type)
-                (* clicked elsewhere *)
-                else 
-                  choose_piece ()
-              end
+            let rec choose_piece () = 
+              let s = G.wait_next_event [G.Button_down] in
+              let x, y = s.mouse_x / cSQUARE_WIDTH, s.mouse_y / cSQUARE_HEIGHT in
+              if x <> end_f then
+                choose_piece ()
+              else
+                begin
+                  (* chose queen *)
+                  if y = end_r + (direction*1) then
+                    R.register ((new queen 
+                                    (int_to_file end_f)
+                                    (int_to_rank end_r) c) :> T.piece_type)
+                  (* chose rook *)
+                  else if y = end_r + (direction*2) then
+                    R.register ((new rook 
+                                    (int_to_file end_f)
+                                    (int_to_rank end_r) c) :> T.piece_type)
+                  (* chose bishop *)
+                  else if y = end_r + (direction*3) then
+                    R.register ((new bishop 
+                                    (int_to_file end_f)
+                                    (int_to_rank end_r) c) :> T.piece_type)
+                  (* chose knight *)
+                  else if y = end_r + (direction*4) then
+                    R.register ((new knight 
+                                    (int_to_file end_f)
+                                    (int_to_rank end_r) c) :> T.piece_type)
+                  (* clicked elsewhere *)
+                  else 
+                    choose_piece ()
+                end
+            in
+            choose_piece ();
           in
-          choose_piece ();
-        in
-        promote (self :> T.piece_type);
-      end
+          promote (self :> T.piece_type);
+        end
 
   method! draw : unit = 
     super#draw;
@@ -336,13 +356,6 @@ object(self)
 
   method! name : string = "king"
 
-  (* QUESTION: Is there any reason we override this here, instead of just defining
-      it in the super class?  *)
-  method! chebyshev_distance_to (end_coord : coordinate) : int = 
-    let start_x, start_y = coord_to_int super#get_pos in 
-    let end_x, end_y = coord_to_int end_coord in 
-    max (abs (start_x - end_x)) (abs (start_y - end_y))
-
   method! is_king = true
 
   method! can_be_valid_move (coord : coordinate) : bool = 
@@ -428,6 +441,8 @@ object(self)
       (* castling logic for both kingside and queenside *)
       ((self#chebyshev_distance_to coord) = 2) &&
       ((opp_king#chebyshev_distance_to coord) > 1) &&
+      (pieces_dont_attack self#get_pos) &&
+      (pieces_dont_attack self#get_pos) &&
       (
         is_kingside_castling || is_queenside_castling
       )
