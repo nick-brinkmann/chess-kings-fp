@@ -220,7 +220,7 @@ module Registry : REGISTRY =
     (*  deregister obj : updates registry by removing a piece, alerts user if
                         attempting to remove piece not in registry *)
     let deregister (obj : piece_type) : unit =
-      Printf.printf "Deregistering %b %s at %s now \n" obj#get_color
+      Printf.printf "Deregistering %s at %s now \n" 
       (piece_name_to_string obj#name) (coord_to_string obj#get_pos);
       let new_registrants = Registrants.remove obj !registrants in
       if new_registrants == !registrants then
@@ -415,7 +415,6 @@ module Registry : REGISTRY =
        This modifies the objects properties, so we copy registry
        beforehand and reset it after all testing is done. *)
     let valid_moves_exist () : bool =
-      Printf.printf "Checking valid moves for %b \n" !whose_turn;
       (* sets board to virtual board, so promotion is not triggered
           when checking all possible moves *)
       real_board := false;
@@ -433,26 +432,27 @@ module Registry : REGISTRY =
           false
         else
           begin
-            match coord_to_try with
-            | None -> Printf.printf "No valid moves for %s \n" (piece_name_to_string piece_to_try#name);
-                      false
-            | Some (int_f, int_r) ->
-                  (* calculate next coordinate to try *)
-                  let next_coord : (int * int) option = 
-                    (* If all squares have been tried, then none *)
-                    if int_f = 7 && int_r = 7 then
-                      None
-                    (* if file has been exhausted, try next file *)
-                    else if int_r = 7 then
-                      Some (int_f + 1, 0)
-                    (* otherwise, next square in file *)
-                    else
-                      Some (int_f, int_r + 1)
+            let has_valid_move = ref false in   (* used to break out of loop as soon as move is found *)
+            let i = ref 0 in                    (* iterates through possible files *)
+            let j = ref 0 in                    (* iterates through possible ranks *)
+            (* iterate through all squares on chessboard, if any square is 
+                a valid move break out of loop *)
+            while (not !has_valid_move) && (!i < 8) do
+              while (not !has_valid_move) && (!j < 8) do
+                let (f, r) = int_to_coord (!i, !j) in
+                j := !j + 1;
+                if !curr_ghost_piece#can_be_valid_move (f, r) then
+                  (* make provisional move and verify that wouldn't put player in check *)
+                  (* remember current position so we can update correctly later *)
+                  (let prev = !curr_ghost_piece#get_pos in
+                  take_turn !curr_ghost_piece (f, r);
+                  !curr_ghost_piece#make_move (f, r);
+                  let _at_d8 = 
+                    match find_piece (D, R8) with
+                    | None -> Printf.printf "There ain't shit at D8 \n"
+                    | Some piece -> Printf.printf "Found %s at D8\n" (piece_name_to_string piece#name)
                   in
-                  let (f, r) = int_to_coord (int_f, int_r) in
-                  if (not (piece_to_try#can_be_valid_move (f, r))) then
-                    single_piece_valid_moves ~try_next:next_coord piece
-                  else
+                  if player_not_in_check (not !whose_turn) then
                     begin
                       has_valid_move := true;
                       Printf.printf "valid move is %s %s-%s for %b \n"
@@ -496,7 +496,6 @@ module Registry : REGISTRY =
       List.iter (fun obj -> register obj) curr_registry;
       (* reset boolean so that promotion is once again considered for pawns *)
       real_board := true;
-      Printf.printf "Valid moves returned: %b \n" exists_move;
       exists_move
     ;;
 
