@@ -423,7 +423,11 @@ module Registry : REGISTRY =
 
       (* checks if a single piece has any valid moves *)
       let single_piece_valid_moves (piece : piece_type) : bool = 
-        let curr_ghost_piece = ref piece in
+        let next_ghost_piece = 
+          match find_piece piece#get_pos with
+          | None -> raise (Invalid_argument "error in single_piece_valid_moves")
+          | Some piece -> piece in
+        let curr_ghost_piece = ref next_ghost_piece in
         if !curr_ghost_piece#get_color <> !whose_turn then
           false
         else
@@ -464,19 +468,19 @@ module Registry : REGISTRY =
                         (piece#get_color) (piece_name_to_string piece#name)
                         (piece#can_be_valid_move (D,R8))
                       in
-                      if get_state () = Checkmate then 
+                      if get_state () = Checkmate || get_state () = Check then 
                         Printf.printf "Thinks this gets out of check: %s %s \n"
                       (piece_name_to_string !curr_ghost_piece#name)
                       (coord_to_string !curr_ghost_piece#get_pos)
                     end;
                     
                   take_back ();
-                  let next_ghost_piece = 
+                  let next_next_ghost_piece = 
                     (match find_piece prev with
                     | None -> raise (Invalid_argument "error in has_valid_move")
                     | Some piece -> piece)
                   in
-                  curr_ghost_piece := next_ghost_piece);
+                  curr_ghost_piece := next_next_ghost_piece);
               done;
               i := !i + 1;
               j := 0;
