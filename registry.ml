@@ -220,8 +220,6 @@ module Registry : REGISTRY =
     (*  deregister obj : updates registry by removing a piece, alerts user if
                         attempting to remove piece not in registry *)
     let deregister (obj : piece_type) : unit =
-      Printf.printf "Deregistering %s at %s now \n" 
-      (piece_name_to_string obj#name) (coord_to_string obj#get_pos);
       let new_registrants = Registrants.remove obj !registrants in
       if new_registrants == !registrants then
         (* no obj removed; as of v4.03, physical equality guaranteed *)
