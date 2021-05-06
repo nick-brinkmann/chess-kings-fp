@@ -455,8 +455,7 @@ object(self)
             | Some piece -> piece#make_move (F, starting_rank)
           end
         else raise (Invalid_argument "castling error")
-      end
-    ;
+      end;
     super#make_move coord
 
 end 

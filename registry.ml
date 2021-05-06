@@ -258,7 +258,7 @@ module Registry : REGISTRY =
       (* filter piece registry by pieces on coord *)
       let subset = Registrants.filter (fun obj -> obj#get_pos = coord) !registrants in
       (* if the subset has more than one piece, then we have broken an invariant *)
-      if Registrants.cardinal subset > 1 then 
+      if Registrants.cardinal subset > 1 then
         raise (Invalid_argument "find_piece: Multiple pieces on the same square")
       else
         Registrants.choose_opt subset
@@ -286,7 +286,7 @@ module Registry : REGISTRY =
             end_square = coord;
             state = !state
           }
-        in 
+        in
         move_history := (Some to_add, copy_pieces ()) :: !move_history 
       in
       add_move piece going_to;
@@ -296,21 +296,19 @@ module Registry : REGISTRY =
 
     (* take_back () -- takes back the last move, if possible. *)
     let take_back () =
-      (* empties the registry and repopulates it *)
-      let rec update_position (lst : piece_type list) : unit = 
-        match lst with 
-        | [] -> ()
-        | hd :: tl -> register hd; update_position tl 
-      in
       (* if no moves made yet, do nothing. otherwise take back a move. *)
       match !move_history with 
       | [] -> ()
       | (last_move, position) :: tl ->
         (
+          (* empty registry and repopulate it *)
           registrants := Registrants.empty;
-          update_position position;
+          List.iter (fun obj -> register obj) position;
+          (* remove head from move_history *)
           move_history := tl;
+          (* set turn back to other player *)
           flip_turn ();
+          (* set game state to previous state *)
           match last_move with 
           | None -> ()
           | Some move -> set_state move.state
@@ -425,7 +423,8 @@ module Registry : REGISTRY =
 
       (* checks if a single piece has any valid moves *)
       let single_piece_valid_moves (piece : piece_type) : bool = 
-        if piece#get_color <> !whose_turn then
+        let curr_ghost_piece = ref piece in
+        if !curr_ghost_piece#get_color <> !whose_turn then
           false
         else
           begin
@@ -438,21 +437,46 @@ module Registry : REGISTRY =
               while (not !has_valid_move) && (!j < 8) do
                 let (f, r) = int_to_coord (!i, !j) in
                 j := !j + 1;
-                if piece#can_be_valid_move (f, r) then
+                if !curr_ghost_piece#can_be_valid_move (f, r) then
                   (* make provisional move and verify that wouldn't put player in check *)
-                  (* (let prev = piece#get_pos in *)
-                  (take_turn piece (f, r);
-                  piece#make_move (f, r);
+                  (* remember current position so we can update correctly later *)
+                  (let prev = !curr_ghost_piece#get_pos in
+                  take_turn !curr_ghost_piece (f, r);
+                  !curr_ghost_piece#make_move (f, r);
+                  let _at_d8 = 
+                    match find_piece (D, R8) with
+                    | None -> Printf.printf "There ain't shit at D8 \n"
+                    | Some piece -> Printf.printf "Found %s at D8\n" (piece_name_to_string piece#name)
+                  in
                   if player_not_in_check (not !whose_turn) then
-                    (has_valid_move := true;
+                    begin
+                      has_valid_move := true;
+                      Printf.printf "valid move is %s %s-%s for %b \n"
+                      (piece_name_to_string !curr_ghost_piece#name)
+                      (coord_to_string prev)
+                      (coord_to_string !curr_ghost_piece#get_pos) 
+                      (not !whose_turn);
+                      let _dat_rook = 
+                        match find_piece (D,R1) with 
+                        | None -> Printf.printf "rook is a hoax \n"
+                        | Some piece -> Printf.printf "rook is %b %s. Can
+                        move to d8?: %b \n"
+                        (piece#get_color) (piece_name_to_string piece#name)
+                        (piece#can_be_valid_move (D,R8))
+                      in
+                      if get_state () = Checkmate then 
+                        Printf.printf "Thinks this gets out of check: %s %s \n"
+                      (piece_name_to_string !curr_ghost_piece#name)
+                      (coord_to_string !curr_ghost_piece#get_pos)
+                    end;
                     
-                    if get_state ()= Check then 
-                      (Printf.printf "Thinks this gets out of check: \n");
-                    Printf.printf "%s %s \n" 
-                    (piece_name_to_string piece#name)
-                    (coord_to_string piece#get_pos));
-                  (* piece#make_move prev); *)
-                  take_back ());
+                  take_back ();
+                  let next_ghost_piece = 
+                    (match find_piece prev with
+                    | None -> raise (Invalid_argument "error in has_valid_move")
+                    | Some piece -> piece)
+                  in
+                  curr_ghost_piece := next_ghost_piece);
               done;
               i := !i + 1;
               j := 0;
