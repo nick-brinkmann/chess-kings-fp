@@ -447,33 +447,8 @@ module Registry : REGISTRY =
                   (let prev = !curr_ghost_piece#get_pos in
                   take_turn !curr_ghost_piece (f, r);
                   !curr_ghost_piece#make_move (f, r);
-                  let _at_d8 = 
-                    match find_piece (D, R8) with
-                    | None -> Printf.printf "There ain't shit at D8 \n"
-                    | Some piece -> Printf.printf "Found %s at D8\n" (piece_name_to_string piece#name)
-                  in
                   if player_not_in_check (not !whose_turn) then
-                    begin
                       has_valid_move := true;
-                      Printf.printf "valid move is %s %s-%s for %b \n"
-                      (piece_name_to_string !curr_ghost_piece#name)
-                      (coord_to_string prev)
-                      (coord_to_string !curr_ghost_piece#get_pos) 
-                      (not !whose_turn);
-                      let _dat_rook = 
-                        match find_piece (D,R1) with 
-                        | None -> Printf.printf "rook is a hoax \n"
-                        | Some piece -> Printf.printf "rook is %b %s. Can
-                        move to d8?: %b \n"
-                        (piece#get_color) (piece_name_to_string piece#name)
-                        (piece#can_be_valid_move (D,R8))
-                      in
-                      if get_state () = Checkmate || get_state () = Check then 
-                        Printf.printf "Thinks this gets out of check: %s %s \n"
-                      (piece_name_to_string !curr_ghost_piece#name)
-                      (coord_to_string !curr_ghost_piece#get_pos)
-                    end;
-                    
                   take_back ();
                   let next_next_ghost_piece = 
                     (match find_piece prev with
