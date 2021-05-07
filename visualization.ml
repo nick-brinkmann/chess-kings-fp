@@ -5,12 +5,6 @@ module T = Registry ;;
 module R = T.Registry ;;
 
 
-let move_on () =
-  if G.read_key () = 'q' then false
-  else true
-;;
-
-
 (* initialize () -- Establishes the graphics window and sets its
    properties.*)
 let initialize () =
@@ -31,7 +25,8 @@ let initialize () =
 let draw_square (c : G.color) (y : int) (x : int) (w : int) (h : int) : unit =
   G.set_color c;
   G.fill_rect (x * w)  (y * h) w h ;;
-(* ((cY_BOARDSIZE * cPIXELS_PER_BLOCK) - h - y * h) *)
+
+
 (* Given the chess coordinates of a specific squares, outlines that square in
 a different color to indicate selection *)
 let highlight_square (c : coordinate) : unit =
@@ -52,7 +47,6 @@ let get_coords (x : int) (y : int) : coordinate =
   f, r
 ;;
   
-
 
 (* Draws game window *)
 let draw_board () : unit =
@@ -104,6 +98,7 @@ let draw_board () : unit =
 ;;
 
 
+(* Returns true if user clicked on the take_back button *)
 let clicked_take_back (x, y : int * int) : unit =
   if (x > 9 * cSQUARE_WIDTH) && 
      (x < 10 * cSQUARE_WIDTH + cSQUARE_WIDTH) && 
@@ -128,18 +123,21 @@ let take_turn () =
         move; otherwise alerts user of invalid move *)
     let x, y = coord_to_int (f, r) in
     G.moveto ((x * cSQUARE_WIDTH) + (cSQUARE_WIDTH / 2)) ((y * cSQUARE_HEIGHT) + (cSQUARE_HEIGHT / 2));
+    (* If the piece cannot legally move to square, alert user *)
     if not (piece#can_be_valid_move (f, r)) then
       (G.set_color G.red;
       G.draw_string "Cannot move here")
+    (* If piece can legally move there, execute provisional move *)
     else
-      (* (let started_at : coordinate = piece#get_pos in *)
+      (* Save the state of the game before the move *)
       (R.take_turn piece (f,r);
       piece#make_move (f, r);
-      (* piece#make_move (f, r); *)
+      (* If the move does not leave the player in check, set moved to true *)
       if R.player_not_in_check piece#get_color then
         (G.clear_graph ();
         draw_board ();
         moved := true)
+      (* IF the move leaves the player in check, take back move and alert user *)
       else
         (R.take_back ();
         selected := None;
@@ -164,14 +162,18 @@ let take_turn () =
       (let (f, r)  = get_coords x y in
         let p = R.find_piece (f, r) in
         match p with
+        (* If player clicked on an empty square then either move selected 
+            piece or do nothing*)
         | None -> 
           begin
               match !selected with
               | None -> ()
               | Some s -> move_piece s (f, r)
           end
+        (* If player clicked on piece then execute following code *)
         | Some piece ->
           begin
+            (* If the piece the user clicked on is of their color, select the piece *)
             if piece#get_color = R.turn () then
               (selected := Some piece;
               G.clear_graph();
@@ -179,21 +181,17 @@ let take_turn () =
               highlight_square piece#get_pos)
             else
               match !selected with
+              (* If the user clicked on opponent's piece and no piece has been 
+                  selected, indicate it is not the opponent's turn *)
               | None -> G.moveto x y;
                         G.set_color G.red;
                         G.draw_string "Not your turn"
+              (* If the user clicked on opponent's piece and a piece is currently selected, 
+                  attempt move *)
               | Some s -> move_piece s (f, r)
           end)
   done;;
 
-let print_board (pos : (T.piece_type option) array array) : unit =
-  Array.iteri (fun _y m -> 
-                Array.iteri (fun _x piece_opt -> 
-                      match piece_opt with
-                      | None -> Printf.printf "O"
-                      | Some _piece -> Printf.printf "X") m;
-                Printf.printf "\n") pos 
-;;
 
 (* Renders the game, waits for next move *)
 let render () = 
@@ -201,7 +199,7 @@ let render () =
   draw_board ();
 
   take_turn ();
-
+  (* After the player has taken their turn, check the state of the opponent's positin *)
   if R.checkmate_check () then
     R.set_state Checkmate
   else if R.check_stalemate () then

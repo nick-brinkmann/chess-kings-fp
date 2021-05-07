@@ -137,23 +137,26 @@ object (self)
     | None -> false
     | Some last_move ->
       begin
+<<<<<<< HEAD
+=======
+        (* if this logical statement returns true, then en passant is being played  *)
+>>>>>>> 93bae1efb34dead0a1f8e48aa4ee45eed3cbf597
         last_move.player <> self#get_color && last_move.piece = Pawn &&
         (fst last_move.end_square) = new_f && 
         (rank_to_int (snd last_move.end_square)) = curr_ra &&
         new_r = (if self#get_color then R6 else R3) &&
         abs (end_fi - curr_fi) = 1 &&
+<<<<<<< HEAD
         (snd last_move.start_square) = (if last_move.player then R2 else R7)
+=======
+        (snd last_move.start_square) = (if last_move.player then R2 else R7) 
+>>>>>>> 93bae1efb34dead0a1f8e48aa4ee45eed3cbf597
       end
     in
 
     (* execute en passant*)
     if is_en_passant then
       begin
-        (* let Some last_move = R.last_move () in
-        Printf.printf "Last move: %s-%s \n"
-        (coord_to_string (last_move.start_square)) 
-        (coord_to_string (last_move.end_square)); *)
-        (* super#make_move coord; *)
         match R.find_piece 
         (new_f, int_to_rank (end_ra + (if super#get_color then -1 else 1))) with 
         | None -> raise (Invalid_argument "en passant error")
@@ -319,7 +322,7 @@ object(self)
   method! name : piece_name = Queen
 
   method! can_be_valid_move (coord : coordinate) : bool =
-    (* Registers a new bishop and rook at the same starting square. If either 
+    (* creates a new instance of a bishop and a rook at the same starting square. If either 
       of them can move to the ending square, the move is valid. *)
     let new_rook = (new rook (fst super#get_pos) (snd super#get_pos) self#get_color) in 
     let new_bishop = (new bishop (fst super#get_pos) (snd super#get_pos) self#get_color) in 

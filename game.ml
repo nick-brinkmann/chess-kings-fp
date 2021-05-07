@@ -1,5 +1,4 @@
 (* White is true, Black is false *)
-(* type player = bool ;; *)
 type rank = R1 | R2 | R3 | R4 | R5 | R6 | R7 | R8 ;;
 type file = A | B | C | D | E | F | G | H ;;
 type coordinate = file * rank ;;
@@ -60,6 +59,8 @@ let int_to_rank (i : int) : rank =
 let int_to_coord (fi, ra : int * int) : coordinate =
   (int_to_file fi, int_to_rank ra) ;;
 
+(* The functions below are no longer used, but were very helpful in
+    debugging and would be crucial for printing moves  *)
 let file_to_string (f : file) : string =
   match f with
   | A -> "A"

@@ -1,44 +1,47 @@
-(*
-
--- registering and deregistering pieces
--- obtaining a list of all currently registered pieces
--- obtaining currently registered piece on a certain square.
-
-Stores the registered objects in two data structures, a `Set` for easy
-access to the full set of objects and a 2D array by location allowing
-for more efficient access to the neighboring objects. *)
-
-open Array ;;
 open CS51Utils ;;
 open Game ;;
 module G = Graphics ;;
-
-(* module Viz = Visualization ;; *)
   
 (*....................................................................
-  The objects in the world
+  The objects on the board
  *)
 
+(* Objects in registry are stored as piece_type, despite having their own definitions
+    as piece classes *)
 class type piece_type =
   object
+
+    (* Returns true of the piece_type object is a king *)
     method is_king : bool
 
+    (* Gets the positon of the piece in chess coordinates*)
     method get_pos : coordinate
 
+    (* Updates the coordinate values of the piece *)
     method make_move : coordinate -> unit
 
+    (* Draws the piece on the board at correct location with correct name *)
     method draw : unit
 
+    (* Gets the name (type) of the piece *)
     method name : piece_name
 
+    (* Gets the color of the piece; Black if false, White is true *)
     method get_color : bool
 
+    (* Gets the number of times the piece has moved *)
     method get_moves : int
 
+    (* Determines if the piece can legally move to the provided coordinate *)
     method can_be_valid_move : coordinate -> bool
 
+    (* Determines if piece can take opponent piece at provided coordinate, 
+          required exclusively due to pawns which take pieces in a way different
+          to how they move *)
     method attacks_square : coordinate -> bool
 
+    (* Returns the Chebyshev distance from the pieces current position to the
+        provided coordinate *)
     method chebyshev_distance_to : coordinate -> int
 
   end ;;
@@ -142,7 +145,7 @@ module type REGISTRY =
     val is_real_board : unit -> bool
   end
 
-(* order function of Set*)
+  (* order function of Set*)
 let order_pieces (p1 : piece_type) (p2 : piece_type) = 
   if p1 == p2 then 0 else compare p1 p2 ;;
 
@@ -157,7 +160,9 @@ module Registry : REGISTRY =
     (* initialize set of pieces to empty set *)
     let registrants = ref Registrants.empty ;;
 
-    let print_registry () : unit = 
+
+    (* NOTE: This function is not needed, but is very useful in debugging *)
+    (* let print_registry () : unit = 
       let color_to_string (b : bool) : string = 
         if b then "white" else "black" in
       let all_pieces = Registrants.elements !registrants in 
@@ -175,9 +180,9 @@ module Registry : REGISTRY =
       print_list all_pieces;
       Printf.printf "%d \n" num_pieces;
       Printf.printf "-------------------------\n"
-    ;;
+    ;; *)
 
-    (* whose_turn -- controls whose move it is *)
+    (* whose_turn -- controls whose move it is, initialized to White *)
     let whose_turn = ref true ;;
 
     (* initialize game state to play state *)
@@ -198,12 +203,11 @@ module Registry : REGISTRY =
                 even then it's white's turn, otherwise it's black's turn *)
     let turn () =
       !whose_turn ;;
-      
-      let flip_turn () = 
-        whose_turn := not !whose_turn ;;
+    
+    (* Changes turn to other player *)
+    let flip_turn () = 
+      whose_turn := not !whose_turn ;;
         
-        (* let prev_positions = ref [] ;; *)
-
     (* move history stores a list of:
       - moves (player, piece, start and end square) 
       - the positions that those moves result in, 
@@ -241,10 +245,9 @@ module Registry : REGISTRY =
       match !move_history with 
       | [] -> None
       | (move, _position) :: _tl -> move
-      (* | [_elt] -> None
-      | (_move1, _position1) :: (move2, _position2) :: _tl -> move2 *)
     ;;
 
+    (* Explicitly needed for en passant purposes *)
     let two_moves_ago () : move_memory option = 
       match !move_history with 
       | [] -> None 
@@ -252,6 +255,7 @@ module Registry : REGISTRY =
       | (_move1, _pos1) :: (move2, _pos2) :: _tl -> move2 
     ;;
 
+  
     let find_piece coord : piece_type option = 
       (* filter piece registry by pieces on coord *)
       let subset = Registrants.filter (fun obj -> obj#get_pos = coord) !registrants in
@@ -262,6 +266,7 @@ module Registry : REGISTRY =
         Registrants.choose_opt subset
     ;;
 
+
     (* copy_pieces (): helper function that returns a list of pieces as they 
                        currently are in the registry, essentially taking a copy
                        of the current state of the game *)
@@ -271,9 +276,6 @@ module Registry : REGISTRY =
 
 
     let take_turn (piece : piece_type) (going_to : coordinate) : unit =
-      (* initializes move_history if empty *)
-      (* if !move_history = [] then 
-        move_history := [None, copy_pieces ()]; *)
       (* adds a move to the move history. *)
       let add_move (piece : piece_type) (coord : coordinate) : unit = 
         let to_add : move_memory = 
@@ -288,7 +290,6 @@ module Registry : REGISTRY =
         move_history := (Some to_add, copy_pieces ()) :: !move_history 
       in
       add_move piece going_to;
-      (* prev_positions := (copy_pieces ()) :: !prev_positions; *)
       flip_turn ()
     ;;
 
