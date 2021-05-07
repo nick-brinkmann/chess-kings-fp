@@ -63,8 +63,4 @@ let run () =
       else
         Viz.clicked_take_back (x, y));
 
-    (* After each turn:
-        - user presses 'q' to end game
-        - any other key to continue *)
-    (* if not (Viz.move_on ()) then end_game := true *)
   done;;
