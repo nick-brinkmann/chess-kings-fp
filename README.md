@@ -13,3 +13,5 @@ b) not a legal move.
 - at the end of the game, you can click `take back` to get back to the original 
 starting position, or `exit` to close the window.
 
+- see our YouTube videos at https://www.youtube.com/watch?v=B7vnS3GYWjw 
+(main video) and https://www.youtube.com/watch?v=aS5FoLeWDNk (bonus content).
