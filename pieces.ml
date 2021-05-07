@@ -137,20 +137,13 @@ object (self)
     | None -> false
     | Some last_move ->
       begin
-<<<<<<< HEAD
-=======
         (* if this logical statement returns true, then en passant is being played  *)
->>>>>>> 93bae1efb34dead0a1f8e48aa4ee45eed3cbf597
         last_move.player <> self#get_color && last_move.piece = Pawn &&
         (fst last_move.end_square) = new_f && 
         (rank_to_int (snd last_move.end_square)) = curr_ra &&
         new_r = (if self#get_color then R6 else R3) &&
         abs (end_fi - curr_fi) = 1 &&
-<<<<<<< HEAD
-        (snd last_move.start_square) = (if last_move.player then R2 else R7)
-=======
         (snd last_move.start_square) = (if last_move.player then R2 else R7) 
->>>>>>> 93bae1efb34dead0a1f8e48aa4ee45eed3cbf597
       end
     in
 

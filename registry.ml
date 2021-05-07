@@ -160,9 +160,9 @@ module Registry : REGISTRY =
     (* initialize set of pieces to empty set *)
     let registrants = ref Registrants.empty ;;
 
-
-    (* NOTE: This function is not needed, but is very useful in debugging *)
-    (* let print_registry () : unit = 
+    (* This function is strictly for debugging and error message. Very useful. 
+        sShould not run *)
+    let print_registry () : unit = 
       let color_to_string (b : bool) : string = 
         if b then "white" else "black" in
       let all_pieces = Registrants.elements !registrants in 
@@ -180,7 +180,7 @@ module Registry : REGISTRY =
       print_list all_pieces;
       Printf.printf "%d \n" num_pieces;
       Printf.printf "-------------------------\n"
-    ;; *)
+    ;;
 
     (* whose_turn -- controls whose move it is, initialized to White *)
     let whose_turn = ref true ;;
