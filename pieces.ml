@@ -137,19 +137,12 @@ object (self)
     | None -> false
     | Some last_move ->
       begin
-        (* Printf.printf "Last move was %s to %s \n" 
-        (coord_to_string (last_move.start_square)) 
-        (coord_to_string (last_move.end_square)); *)
-        let thinks_ep_is : bool =
         last_move.player <> self#get_color && last_move.piece = Pawn &&
         (fst last_move.end_square) = new_f && 
         (rank_to_int (snd last_move.end_square)) = curr_ra &&
         new_r = (if self#get_color then R6 else R3) &&
         abs (end_fi - curr_fi) = 1 &&
-        (snd last_move.start_square) = (if last_move.player then R2 else R7) in 
-        (* Printf.printf "Thinks en passant is %b \n" thinks_ep_is;
-        Printf.printf "new_r is %s \n" (rank_to_string new_r); *)
-        thinks_ep_is
+        (snd last_move.start_square) = (if last_move.player then R2 else R7)
       end
     in
 
